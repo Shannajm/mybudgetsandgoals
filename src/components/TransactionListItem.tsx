@@ -1,7 +1,12 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
+import {
+  AlertDialog, AlertDialogTrigger, AlertDialogContent,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
+  AlertDialogCancel, AlertDialogAction
+} from "@/components/ui/alert-dialog";
 import { Transaction } from '@/services/TransactionService';
 import { formatSigned, formatCurrency } from '@/lib/utils';
 import { fxService } from '@/services/FxService';
@@ -10,6 +15,7 @@ interface TransactionListItemProps {
   transaction: Transaction;
   accountName: string;
   onEdit: (transaction: Transaction) => void;
+  onDelete?: (id: string) => void; // 👈 new
   getAccountName?: (accountId: string) => string;
   getAccountCurrency?: (accountId: string) => string;
 }
@@ -18,6 +24,7 @@ const TransactionListItem: React.FC<TransactionListItemProps> = ({
   transaction, 
   accountName, 
   onEdit,
+  onDelete,
   getAccountName,
   getAccountCurrency
 }) => {
@@ -109,14 +116,43 @@ const TransactionListItem: React.FC<TransactionListItemProps> = ({
             <span className={`font-bold ${colorClass}`}>
               {text}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(transaction)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onEdit(transaction)}
+                aria-label="Edit transaction"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              {onDelete && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete transaction"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will remove the transaction and update account balances.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex justify-end gap-2">
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDelete(transaction.id)}>Delete</AlertDialogAction>
+                    </div>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-between text-sm text-gray-500">
