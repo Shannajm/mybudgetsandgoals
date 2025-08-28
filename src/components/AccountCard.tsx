@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom"; // Added
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit, Trash2 } from "lucide-react";
@@ -16,13 +17,14 @@ type Props = {
 };
 
 export default function AccountCard({ account, onClick, onEdit, onDelete }: Props) {
+  const nav = useNavigate(); // Added
   const cur = account.currency || "USD";
   const balance = account.currentBalance ?? account.balance ?? 0;
 
   return (
     <Card
       className="rounded-xl border p-4 hover:bg-muted/50 cursor-pointer transition"
-      onClick={onClick}               // ✅ card body => Quick Actions (parent decides)
+      onClick={onClick}
       role="button"
     >
       <div className="flex items-start justify-between">
@@ -36,10 +38,27 @@ export default function AccountCard({ account, onClick, onEdit, onDelete }: Prop
         </div>
 
         <div className="flex gap-1">
+          {account.type === "credit" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                nav(
+                  `/transactions?add=1&type=transfer&to=${account.id}` +
+                  `&category=${encodeURIComponent("Credit Card Payment")}`
+                );
+              }}
+              aria-label="Pay credit card"
+              title="Pay credit card"
+            >
+              Pay
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => { e.stopPropagation(); onEdit?.(account); }}    // ✏️ only edit
+            onClick={(e) => { e.stopPropagation(); onEdit?.(account); }}
             aria-label="Edit account"
             title="Edit"
           >
@@ -48,7 +67,7 @@ export default function AccountCard({ account, onClick, onEdit, onDelete }: Prop
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => { e.stopPropagation(); onDelete?.(account.id); }} // 🗑 only delete
+            onClick={(e) => { e.stopPropagation(); onDelete?.(account.id); }}
             aria-label="Delete account"
             title="Delete"
           >
@@ -56,7 +75,6 @@ export default function AccountCard({ account, onClick, onEdit, onDelete }: Prop
           </Button>
         </div>
       </div>
-
       {/* keep your extra credit-card details below if you have them */}
     </Card>
   );
