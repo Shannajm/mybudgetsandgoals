@@ -28,7 +28,7 @@ jobs:
 
       # Upload the built files in /dist to your hosting via FTP/FTPS
       - name: Deploy via FTP/FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
