@@ -91,12 +91,12 @@ class TransactionService {
         where('userId', '==', currentUser.uid)
       );
       const querySnapshot = await getDocs(q);
-      const transactions = querySnapshot.docs.map(doc => ({
+      const rows = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Transaction[];
-
-      return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      const visible = rows.filter(t => !t.deleted); // Exclude soft-deleted
+      return visible.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } catch (error) {
       console.error('Error fetching transactions:', error);
       return [];
