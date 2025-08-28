@@ -2,8 +2,8 @@ name: Build & Deploy to cPanel
 
 on:
   push:
-    branches: [ main ]       # change if your default branch is different
-  workflow_dispatch:         # lets you run it manually from the Actions tab
+    branches: [ main ]            # change if your default branch is different
+  workflow_dispatch:              # lets you run it manually from the Actions tab
 
 jobs:
   build-and-deploy:
@@ -19,6 +19,22 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+
+      # Sanity: make sure all required secrets are present (clear error if any are missing)
+      - name: Preflight secrets
+        run: |
+          require() { test -n "$1" || { echo "❌ Missing secret: $2"; exit 1; }; }
+          require "${{ secrets.FTP_SERVER }}" FTP_SERVER
+          require "${{ secrets.FTP_USERNAME }}" FTP_USERNAME
+          require "${{ secrets.FTP_PASSWORD }}" FTP_PASSWORD
+          require "${{ secrets.FTP_PORT }}" FTP_PORT
+          require "${{ secrets.FTP_PATH }}" FTP_PATH
+          require "${{ secrets.VITE_FIREBASE_API_KEY }}" VITE_FIREBASE_API_KEY
+          require "${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}" VITE_FIREBASE_AUTH_DOMAIN
+          require "${{ secrets.VITE_FIREBASE_PROJECT_ID }}" VITE_FIREBASE_PROJECT_ID
+          require "${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}" VITE_FIREBASE_STORAGE_BUCKET
+          require "${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}" VITE_FIREBASE_MESSAGING_SENDER_ID
+          require "${{ secrets.VITE_FIREBASE_APP_ID }}" VITE_FIREBASE_APP_ID
 
       - name: Create .env.production
         run: |
@@ -37,11 +53,24 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Helpful sanity step so ENOTFOUND shows up clearly
-      - name: DNS check for FTP server
+      # Helpful but non-fatal DNS check (so we can see if the hostname resolves)
+      - name: DNS check for FTP server (non-fatal)
+        continue-on-error: true
         run: |
           echo "Resolving ${{ secrets.FTP_SERVER }} ..."
           nslookup ${{ secrets.FTP_SERVER }}
+
+      # Auto-pick protocol: use ftp when FTP_SERVER is an IP (avoids FTPS cert mismatch)
+      - name: Decide protocol automatically
+        run: |
+          S="${{ secrets.FTP_SERVER }}"
+          P="${{ secrets.FTP_PROTOCOL }}"
+          if [[ "$S" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Detected IPv4 for FTP_SERVER; forcing plain FTP."
+            echo "DEPLOY_PROTOCOL=ftp" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_PROTOCOL=${P:-ftps}" >> $GITHUB_ENV
+          fi
 
       - name: Deploy via FTP/FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
@@ -50,12 +79,11 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT }}          # usually 21
-          protocol: ${{ secrets.FTP_PROTOCOL }}  # ftps (recommended) or ftp
+          protocol: ${{ env.DEPLOY_PROTOCOL }}   # ftps or ftp (autodetected above)
           server-dir: ${{ secrets.FTP_PATH }}    # e.g. public_html/ or public_html/app/ (must end with /)
           local-dir: dist/
-          log-level: standard
-          state-name: .ftp-deploy-sync-state.json
-          timeout: 60000
+          log-level: verbose
+          timeout: 120000
           dangerous-clean-slate: true
           exclude: |
             **/.git*
