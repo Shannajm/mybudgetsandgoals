@@ -1,17 +1,21 @@
 // vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig(({ mode }) => ({
-  // 👇 Makes built asset paths work from any subfolder
+  // lets the app run from a subfolder (e.g., public_html/budget/)
   base: mode === "production" ? "./" : "/",
 
   server: { host: "::", port: 8080 },
-  plugins: [react()].filter(Boolean),
+  plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": resolve(__dirname, "./src"),
     },
   },
 }));
