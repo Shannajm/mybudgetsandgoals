@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowUpDown } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from "react-router-dom"; // Add this import
 import TransactionModal from '@/components/modals/TransactionModal';
 import TransactionListItem from '@/components/TransactionListItem';
 import TransactionFilter from '@/components/TransactionFilter';
@@ -20,6 +20,14 @@ const Transactions: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const { toast } = useToast(); // 👈 add this
+
+  // Add this line to extract params for prefill
+  const prefill = {
+    accountId: searchParams.get("accountId") || undefined,
+    type: (searchParams.get("type") as any) || undefined,
+    transferToId: searchParams.get("to") || undefined,
+    category: searchParams.get("category") || undefined,
+  };
 
   useEffect(() => {
     loadData();
@@ -173,6 +181,7 @@ const Transactions: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         transaction={editingTransaction}
         onSave={handleSaveTransaction}
+        prefill={prefill} // 👈 Pass prefill prop here
       />
     </div>
   );

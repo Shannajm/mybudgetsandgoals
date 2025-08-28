@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AccountQuickSheet from "@/components/accounts/AccountQuickSheet";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, AlertCircle, X } from 'lucide-react';
@@ -24,6 +25,7 @@ const Accounts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
+  const [quick, setQuick] = useState<any | null>(null);
 
   useEffect(() => {
     loadAccounts();
@@ -169,7 +171,7 @@ const Accounts: React.FC = () => {
   const hasSeedData = accounts.some(acc => acc.is_seed);
 
   return (
-    <div className="p-6 space-y-6">
+    <>
       {hasSeedData && showWelcomeBanner && (
         <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-900/20">
           <AlertCircle className="h-4 w-4 text-orange-600" />
@@ -203,13 +205,18 @@ const Accounts: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accounts.map((account) => (
-          <AccountCard
-            key={account.id}
-            account={account}
-            onClick={() => handleAccountClick(account)}
-            onDelete={handleDeleteClick}
-          />
+        {accounts.map((a) => (
+          <div
+            key={a.id}
+            className="rounded-xl border p-4 hover:bg-muted/50 cursor-pointer"
+            onClick={() => setQuick(a)}
+          >
+            <AccountCard
+              account={a}
+              onClick={() => setQuick(a)}
+              onDelete={handleDeleteAccount}
+            />
+          </div>
         ))}
       </div>
 
@@ -267,7 +274,18 @@ const Accounts: React.FC = () => {
         account={accountToDelete}
         loading={deleteLoading}
       />
-    </div>
+
+      <AccountQuickSheet
+        open={!!quick}
+        onOpenChange={(v) => !v && setQuick(null)}
+        account={quick}
+        onEdit={(a) => {
+          setQuick(null);
+          handleEdit(a);
+        }}
+        onDelete={handleDeleteAccount}
+      />
+    </>
   );
 };
 

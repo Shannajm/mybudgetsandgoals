@@ -8,7 +8,8 @@ import {
   AlertDialogCancel, AlertDialogAction
 } from "@/components/ui/alert-dialog";
 import { Transaction } from '@/services/TransactionService';
-import { formatSigned, formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
+import { calcRowAmount } from '@/utils/transactionDisplay';
 import { fxService } from '@/services/FxService';
 
 interface TransactionListItemProps {
@@ -100,8 +101,12 @@ const TransactionListItem: React.FC<TransactionListItemProps> = ({
     return null;
   };
 
-  const { text, color } = formatSigned(transaction.amount, transaction.type);
-  const colorClass = color === 'red' ? 'text-red-600' : 'text-green-600';
+  const { value, currency } = calcRowAmount(transaction, getAccountCurrency);
+  const colorClass = value >= 0 ? 'text-green-600' : 'text-red-600';
+  const amountText = `${value >= 0 ? '+' : '-'}${new Intl.NumberFormat(undefined, {
+    style: 'currency',
+    currency
+  }).format(Math.abs(value))}`;
 
   return (
     <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
@@ -114,7 +119,7 @@ const TransactionListItem: React.FC<TransactionListItemProps> = ({
           </h3>
           <div className="flex items-center space-x-2">
             <span className={`font-bold ${colorClass}`}>
-              {text}
+              {amountText}
             </span>
             <div className="flex items-center gap-1">
               <Button
