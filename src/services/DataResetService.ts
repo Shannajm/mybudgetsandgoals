@@ -1,53 +1,68 @@
-// src/services/DataResetService.ts
-import { accountService } from './AccountService';
-import { transactionService } from './TransactionService';
-import { billService } from './BillService';
-import { incomeService } from './IncomeService';
-import { goalService } from './GoalService';
-import { loanService } from './LoanService';
+import { db, auth } from '@/lib/firebase';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+  limit,
+} from 'firebase/firestore';
 
-function chunk<T>(arr: T[], size = 20): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+/**
+ * Delete all documents in a collection for the current user, in batches.
+ * - Uses direct Firestore deletes (ignores any business rules in each service).
+ * - Batch size < 500 to stay under Firestore’s limit.
+ */
+async function deleteUserDocsInBatches(
+  collName: string,
+  uid: string,
+  batchSize = 300
+) {
+  const coll = collection(db, collName);
 
-async function runChunked(label: string, tasks: Array<() => Promise<any>>, size = 20) {
-  for (const group of chunk(tasks, size)) {
-    const results = await Promise.allSettled(group.map((fn) => fn()));
-    const failed = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
-    if (failed.length) {
-      console.error(`[reset] ${label}: ${failed.length} failed`, failed.map(f => f.reason));
-      // continue; we don't abort the whole reset if a few items fail
-    }
+  // keep pulling and deleting until there are no more docs
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const q = query(coll, where('userId', '==', uid), limit(batchSize));
+    const snap = await getDocs(q);
+    if (snap.empty) break;
+
+    const batch = writeBatch(db);
+    snap.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+
+    if (snap.size < batchSize) break;
   }
 }
 
 class DataResetService {
   async resetAllData(): Promise<void> {
-    // 1) Load everything for the current user
-    const [accounts, transactions, bills, incomes, goals, loans] = await Promise.all([
-      accountService.getAll(),
-      transactionService.getAll(),
-      billService.getAll(),
-      incomeService.getAll(),
-      goalService.getAll(),
-      loanService.getAll(),
-    ]);
+    const user = auth.currentUser;
+    if (!user) throw new Error('Not signed in');
+    const uid = user.uid;
 
-    // 2) Delete in a safe order (transactions first, accounts last)
-    await runChunked(
+    // Delete in a safe order: transactions first, accounts last
+    const collections = [
       'transactions',
-      transactions.map((t) => () => transactionService.delete(t.id))
-    );
+      'bills',
+      'incomes',
+      'goals',
+      'loans',
+      'accounts',
+    ];
 
-    await runChunked('bills', bills.map((b) => () => billService.delete(b.id)));
-    await runChunked('incomes', incomes.map((i) => () => incomeService.delete(i.id)));
-    await runChunked('goals', goals.map((g) => () => goalService.delete(g.id)));
-    await runChunked('loans', loans.map((l) => () => loanService.delete(l.id)));
-
-    // accounts last (after their transactions are gone)
-    await runChunked('accounts', accounts.map((a) => () => accountService.delete(a.id)));
+    for (const name of collections) {
+      try {
+        await deleteUserDocsInBatches(name, uid, 300);
+        // eslint-disable-next-line no-console
+        console.log(`[reset] cleared ${name}`);
+      } catch (err) {
+        // log and continue; we still want to clear everything else
+        // eslint-disable-next-line no-console
+        console.error(`[reset] failed to clear ${name}`, err);
+        throw err; // surface to UI; comment this out if you prefer "best-effort" success
+      }
+    }
   }
 }
 
