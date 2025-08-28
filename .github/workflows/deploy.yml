@@ -1,4 +1,9 @@
-name: Build & Deploy to cPanel
+- name: DNS check for FTP server
+  run: |
+    echo "Checking DNS for ${{ secrets.FTP_SERVER }} ..."
+    nslookup ${{ secrets.FTP_SERVER }} || (echo "DNS lookup failed" && exit 1)
+
+- name: Build & Deploy to cPanel
 on:
   push:
     branches: [ main ]      # change if your default branch is different
