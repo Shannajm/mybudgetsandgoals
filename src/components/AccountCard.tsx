@@ -1,90 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Wallet, CreditCard, PiggyBank, Trash2, Plus, Edit } from 'lucide-react';
-import { Account, accountService, StatementStatus } from '@/services/AccountService';
-import { formatCurrency } from '@/lib/utils';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Edit, Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+import type { Account } from "@/services/AccountService";
 
 type Props = {
   account: Account;
-  onClick?: () => void;                  // open quick panel
-  onEdit?: (a: Account) => void;         // open edit modal
-  onDelete?: (id: string) => void;       // open delete dialog
+  /** Called when the user clicks the **card body** (Quick Actions trigger) */
+  onClick?: () => void;
+  /** Called when the user clicks the pencil icon (Edit) */
+  onEdit?: (a: Account) => void;
+  /** Called when the user clicks the trash icon (Delete) */
+  onDelete?: (id: string) => void;
 };
 
-const AccountCard: React.FC<Props> = ({ account, onClick, onEdit, onDelete }) => {
-  const [statementStatus, setStatementStatus] = useState<StatementStatus | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (account.type === 'credit' && account.statementDate && account.statementAmount) {
-      setLoading(true);
-      accountService.getStatementStatus(account.id)
-        .then(setStatementStatus)
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    }
-  }, [account.id, account.type, account.statementDate, account.statementAmount]);
-
-  const getAccountIcon = (type: string) => {
-    switch (type) {
-      case 'checking': return Wallet;
-      case 'savings': return PiggyBank;
-      case 'credit': return CreditCard;
-      default: return Wallet;
-    }
-  };
-
-  const getAccountColor = (type: string) => {
-    switch (type) {
-      case 'checking': return 'bg-blue-500';
-      case 'savings': return 'bg-green-500';
-      case 'credit': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getAccountTypeLabel = (type: string) => {
-    switch (type) {
-      case 'checking': return 'Checking';
-      case 'savings': return 'Savings';
-      case 'credit': return 'Credit Card';
-      default: return type;
-    }
-  };
-
-  const formatCreditBalance = (balance: number) => {
-    const isPositive = balance > 0;
-    const className = isPositive ? 'text-red-600' : 'text-green-600';
-    const prefix = isPositive ? '' : '+';
-    return {
-      text: `${prefix}${formatCurrency(Math.abs(balance), account.currency)}`,
-      className
-    };
-  };
-
-  const Icon = getAccountIcon(account.type);
-  const currentBalance = account.currentBalance ?? account.balance;
+export default function AccountCard({ account, onClick, onEdit, onDelete }: Props) {
   const cur = account.currency || "USD";
   const balance = account.currentBalance ?? account.balance ?? 0;
-
-  const getStatementDateLabel = (day: number) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    let statementMonth = currentMonth;
-    if (day > now.getDate()) {
-      statementMonth = currentMonth - 1;
-      if (statementMonth < 0) statementMonth = 11;
-    }
-    return `${months[statementMonth]} ${day}`;
-  };
 
   return (
     <Card
       className="rounded-xl border p-4 hover:bg-muted/50 cursor-pointer transition"
-      onClick={onClick}                       // ✅ card click opens quick panel
+      onClick={onClick}               // ✅ card body => Quick Actions (parent decides)
       role="button"
     >
       <div className="flex items-start justify-between">
@@ -101,7 +39,7 @@ const AccountCard: React.FC<Props> = ({ account, onClick, onEdit, onDelete }) =>
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => { e.stopPropagation(); onEdit?.(account); }}   // ✅ doesn't open panel
+            onClick={(e) => { e.stopPropagation(); onEdit?.(account); }}    // ✏️ only edit
             aria-label="Edit account"
             title="Edit"
           >
@@ -110,7 +48,7 @@ const AccountCard: React.FC<Props> = ({ account, onClick, onEdit, onDelete }) =>
           <Button
             variant="ghost"
             size="icon"
-            onClick={(e) => { e.stopPropagation(); onDelete?.(account.id); }} // ✅ doesn't open panel
+            onClick={(e) => { e.stopPropagation(); onDelete?.(account.id); }} // 🗑 only delete
             aria-label="Delete account"
             title="Delete"
           >
@@ -119,9 +57,7 @@ const AccountCard: React.FC<Props> = ({ account, onClick, onEdit, onDelete }) =>
         </div>
       </div>
 
-      {/* If you show credit details, keep that block here unchanged */}
+      {/* keep your extra credit-card details below if you have them */}
     </Card>
   );
-};
-
-export default AccountCard;
+}
