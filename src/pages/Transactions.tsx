@@ -103,6 +103,14 @@ const Transactions: React.FC = () => {
     return account?.currency || 'USD';
   };
 
+  // Prefill object for Add Transaction modal
+  const prefill = {
+    accountId: searchParams.get("accountId") || undefined,
+    type: (searchParams.get("type") as any) || undefined,
+    transferToId: searchParams.get("to") || undefined,
+    category: searchParams.get("category") || undefined,
+  };
+
   if (loading) {
     return (
       <div className="p-6 space-y-6">
@@ -173,6 +181,7 @@ const Transactions: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         transaction={editingTransaction}
         onSave={handleSaveTransaction}
+        prefill={prefill} // <-- pass prefill prop here
       />
     </div>
   );
