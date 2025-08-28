@@ -1,189 +1,151 @@
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog, AlertDialogTrigger, AlertDialogContent,
-  AlertDialogHeader, AlertDialogTitle, AlertDialogDescription,
-  AlertDialogCancel, AlertDialogAction
-} from "@/components/ui/alert-dialog";
-import { Transaction } from '@/services/TransactionService';
-import { formatCurrency } from '@/lib/utils';
-import { calcRowAmount } from '@/utils/transactionDisplay';
-import { fxService } from '@/services/FxService';
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription
+} from "@/components/ui/sheet";
+import { formatCurrency } from "@/lib/utils";
 
-interface TransactionListItemProps {
-  transaction: Transaction;
-  accountName: string;
-  onEdit: (transaction: Transaction) => void;
-  onDelete?: (id: string) => void; // 👈 new
-  getAccountName?: (accountId: string) => string;
-  getAccountCurrency?: (accountId: string) => string;
-}
+type Account = {
+  id: string;
+  name: string;
+  type: "checking" | "savings" | "credit" | string;
+  currency?: string;
+  balance?: number;
+  creditLimit?: number;
+  statementAmount?: number;
+  paidThisCycle?: number;
+  owedOnStatement?: number;
+};
 
-const TransactionListItem: React.FC<TransactionListItemProps> = ({ 
-  transaction, 
-  accountName, 
+export default function AccountQuickSheet({
+  open,
+  onOpenChange,
+  account,
   onEdit,
   onDelete,
-  getAccountName,
-  getAccountCurrency
-}) => {
-  const getCategoryBadgeColor = (category: string) => {
-    const colors: { [key: string]: string } = {
-      'Food & Dining': 'bg-orange-100 text-orange-800',
-      'Salary': 'bg-green-100 text-green-800',
-      'Utilities': 'bg-blue-100 text-blue-800',
-      'Transfer': 'bg-purple-100 text-purple-800',
-      'Transportation': 'bg-yellow-100 text-yellow-800',
-      'Other': 'bg-gray-100 text-gray-800'
-    };
-    return colors[category] || 'bg-gray-100 text-gray-800';
-  };
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  account: Account | null;
+  onEdit: (a: Account) => void;
+  onDelete: (id: string) => void;
+}) {
+  const nav = useNavigate();
+  const isCredit = account?.type === "credit";
 
-  const renderCrossCurrencyDisplay = () => {
-    if (transaction.fxRate && transaction.fxFrom && transaction.fxTo && transaction.convertedAmount) {
-      const sourceAmount = Math.abs(transaction.amount);
-      const targetAmount = transaction.convertedAmount;
-      
-      return (
-        <span className="text-xs text-blue-600 ml-2">
-          (↔ {fxService.formatExchangeDisplay(
-            sourceAmount,
-            targetAmount,
-            transaction.fxRate,
-            transaction.fxFrom,
-            transaction.fxTo
-          )})
-        </span>
-      );
-    }
-    return null;
-  };
+  const stats = useMemo(() => {
+    if (!account) return null;
+    const cur = account.currency || "USD";
+    const items: Array<{ label: string; value: string }> = [];
 
-  const renderTransferDisplay = () => {
-    if (transaction.type === 'transfer_out' && transaction.relatedTransactionId) {
-      const fromCurrency = getAccountCurrency ? getAccountCurrency(transaction.accountId) : 'USD';
-      const rate = transaction.rate || 1;
-      const convertedAmount = Math.abs(transaction.amount) * rate;
-      
-      return (
-        <span className="text-xs text-gray-600 ml-2">
-          (→ {fxService.formatExchangeDisplay(
-            Math.abs(transaction.amount),
-            convertedAmount,
-            rate,
-            fromCurrency,
-            transaction.currency || 'USD'
-          )})
-        </span>
-      );
-    }
-    
-    if (transaction.type === 'transfer_in' && transaction.relatedTransactionId) {
-      const toCurrency = getAccountCurrency ? getAccountCurrency(transaction.accountId) : 'USD';
-      const rate = transaction.rate || 1;
-      const originalAmount = transaction.amount / rate;
-      
-      return (
-        <span className="text-xs text-gray-600 ml-2">
-          (← {fxService.formatExchangeDisplay(
-            originalAmount,
-            transaction.amount,
-            rate,
-            transaction.currency || 'USD',
-            toCurrency
-          )})
-        </span>
-      );
-    }
-    
-    return null;
-  };
+    items.push({
+      label: isCredit ? "Current Balance" : "Current Balance",
+      value: formatCurrency(Math.abs(account.balance || 0), cur),
+    });
 
-  const { value, currency } = calcRowAmount(transaction, getAccountCurrency);
-  const colorClass = value >= 0 ? 'text-green-600' : 'text-red-600';
-  const amountText = `${value >= 0 ? '+' : '-'}${new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency
-  }).format(Math.abs(value))}`;
+    if (isCredit) {
+      const limit = account.creditLimit || 0;
+      const avail = Math.max(limit - (account.balance || 0), 0);
+      items.push({ label: "Credit Limit", value: formatCurrency(limit, cur) });
+      items.push({ label: "Available Credit", value: formatCurrency(avail, cur) });
+      items.push({
+        label: "Paid this cycle",
+        value: formatCurrency(Math.abs(account.paidThisCycle || 0), cur),
+      });
+      items.push({
+        label: "Owed on statement",
+        value: formatCurrency(Math.abs(account.owedOnStatement || 0), cur),
+      });
+    }
+
+    return items;
+  }, [account, isCredit]);
+
+  if (!account) return null;
 
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group">
-      <div className="flex-1">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="font-medium text-gray-900 dark:text-white">
-            {transaction.description}
-            {renderCrossCurrencyDisplay()}
-            {renderTransferDisplay()}
-          </h3>
-          <div className="flex items-center space-x-2">
-            <span className={`font-bold ${colorClass}`}>
-              {amountText}
-            </span>
-            <div className="flex items-center gap-1">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            {account.name}
+            <Badge variant="outline" className="uppercase">
+              {account.type}
+            </Badge>
+          </SheetTitle>
+          <SheetDescription>
+            Quick actions and a snapshot of this account.
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-4">
+          {/* Overview */}
+          <div className="rounded-lg border p-4">
+            <div className="text-sm font-medium mb-2">Overview</div>
+            <div className="grid grid-cols-1 gap-2">
+              {stats?.map((s) => (
+                <div key={s.label} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{s.label}</span>
+                  <span className="font-medium">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="rounded-lg border p-4">
+            <div className="text-sm font-medium mb-2">Actions</div>
+            <div className="grid grid-cols-2 gap-2">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onEdit(transaction)}
-                aria-label="Edit transaction"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                variant="secondary"
+                onClick={() => {
+                  onOpenChange(false);
+                  onEdit(account);
+                }}
               >
-                <Edit className="h-4 w-4" />
+                Edit account
               </Button>
-              {onDelete && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Delete transaction"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will remove the transaction and update account balances.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="flex justify-end gap-2">
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => onDelete(transaction.id)}>Delete</AlertDialogAction>
-                    </div>
-                  </AlertDialogContent>
-                </AlertDialog>
+
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  onOpenChange(false);
+                  onDelete(account.id);
+                }}
+              >
+                Delete account
+              </Button>
+
+              <Button
+                onClick={() => {
+                  // Prefill Add Transaction with this account as the selected account
+                  onOpenChange(false);
+                  nav(`/transactions?add=1&accountId=${account.id}`);
+                }}
+              >
+                Add transaction
+              </Button>
+
+              {isCredit && (
+                <Button
+                  onClick={() => {
+                    // Prefill as a transfer *to* this credit card with a special category
+                    onOpenChange(false);
+                    nav(
+                      `/transactions?add=1&type=transfer&to=${account.id}` +
+                        `&category=${encodeURIComponent("Credit Card Payment")}`
+                    );
+                  }}
+                >
+                  Pay credit card
+                </Button>
               )}
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-between text-sm text-gray-500">
-          <div className="flex items-center space-x-2">
-            <Badge className={getCategoryBadgeColor(transaction.category)}>
-              {transaction.category}
-            </Badge>
-            <span>{accountName}</span>
-            {transaction.type === 'transfer' && transaction.fromAccountId && transaction.toAccountId && getAccountName && (
-              <span className="text-xs">
-                {getAccountName(transaction.fromAccountId)} → {getAccountName(transaction.toAccountId)}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center space-x-4">
-            <span>{transaction.date}</span>
-            {transaction.balance && (
-              <span className="text-gray-400">
-                Balance: {formatCurrency(transaction.balance)}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
-};
-
-export default TransactionListItem;
+}
