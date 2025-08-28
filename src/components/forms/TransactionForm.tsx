@@ -22,22 +22,36 @@ interface TransactionFormProps {
   onSave: (transaction?: Transaction) => void;
   onCancel: () => void;
   open?: boolean;
-  onCreated?: () => void; // 👈 added
+  onCreated?: () => void;
+  prefill?: {
+    accountId?: string;
+    type?: "income" | "expense" | "transfer";
+    transferToId?: string;
+    category?: string;
+  };
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel, open, onCreated }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({
+  transaction,
+  onSave,
+  onCancel,
+  open,
+  onCreated,
+  prefill
+}) => {
   const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
   const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
   const [formData, setFormData] = useState<CreateTransactionData>({
     description: '',
     amount: 0,
-    type: 'expense',
+    type: prefill?.type || 'expense',
     date: new Date().toISOString().split('T')[0],
-    category: '',
-    accountId: ''
+    category: prefill?.category || '',
+    accountId: prefill?.accountId || ''
   });
-  
+  const [transferToId, setTransferToId] = useState<string>(prefill?.transferToId || '');
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [date, setDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
@@ -47,6 +61,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
   const [amountCurrency, setAmountCurrency] = useState<string>('USD');
   const [fxRate, setFxRate] = useState<number | ''>('');
   const [needsFx, setNeedsFx] = useState(false);
+
+  // Prefill logic when modal opens
+  useEffect(() => {
+    if (!open) return;
+    setFormData((prev) => ({
+      ...prev,
+      accountId: prefill?.accountId ?? prev.accountId,
+      type: prefill?.type ?? prev.type,
+      category: prefill?.category ?? prev.category,
+    }));
+    setTransferToId(prefill?.transferToId ?? '');
+  }, [open, prefill?.accountId, prefill?.type, prefill?.transferToId, prefill?.category]);
 
   useEffect(() => {
     loadCategories();
