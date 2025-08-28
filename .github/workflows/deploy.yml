@@ -1,25 +1,28 @@
-- name: DNS check for FTP server
-  run: |
-    echo "Checking DNS for ${{ secrets.FTP_SERVER }} ..."
-    nslookup ${{ secrets.FTP_SERVER }} || (echo "DNS lookup failed" && exit 1)
+name: Build & Deploy to cPanel
 
-- name: Build & Deploy to cPanel
 on:
   push:
-    branches: [ main ]      # change if your default branch is different
+    branches: [ main ]       # change if your default branch is different
+  workflow_dispatch:         # lets you run it manually from the Actions tab
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with: { node-version: 20 }
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
 
-      # Create production env file from your repo secrets
       - name: Create .env.production
         run: |
-          cat > .env.production <<EOF
+          cat > .env.production <<'EOF'
           VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID }}
@@ -28,21 +31,34 @@ jobs:
           VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}
           EOF
 
-      - run: npm ci
-      - run: npm run build
+      - name: Install deps
+        run: npm ci
 
-      # Upload the built files in /dist to your hosting via FTP/FTPS
+      - name: Build
+        run: npm run build
+
+      # Helpful sanity step so ENOTFOUND shows up clearly
+      - name: DNS check for FTP server
+        run: |
+          echo "Resolving ${{ secrets.FTP_SERVER }} ..."
+          nslookup ${{ secrets.FTP_SERVER }}
+
       - name: Deploy via FTP/FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          server: ${{ secrets.FTP_SERVER }}      # e.g. ftp.yourdomain.com (no scheme, no slash)
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }}             # usually 21
-          protocol: ${{ secrets.FTP_PROTOCOL }}     # ftps (recommended) or ftp
-          server-dir: ${{ secrets.FTP_PATH }}       # e.g. public_html/ or public_html/app/
+          port: ${{ secrets.FTP_PORT }}          # usually 21
+          protocol: ${{ secrets.FTP_PROTOCOL }}  # ftps (recommended) or ftp
+          server-dir: ${{ secrets.FTP_PATH }}    # e.g. public_html/ or public_html/app/ (must end with /)
           local-dir: dist/
-          dangerous-clean-slate: true               # wipes target before upload
+          log-level: standard
+          state-name: .ftp-deploy-sync-state.json
+          timeout: 60000
+          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.github*
+            **/node_modules/**
+            **/.env*
