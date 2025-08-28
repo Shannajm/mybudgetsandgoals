@@ -17,11 +17,9 @@ import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
 import CurrencyConverter from './CurrencyConverter';
 
-interface TransactionFormProps {
-  transaction?: Transaction;
-  onSave: (transaction?: Transaction) => void;
-  onCancel: () => void;
-  open?: boolean;
+type Props = {
+  open: boolean;
+  onClose: () => void;
   onCreated?: () => void;
   prefill?: {
     accountId?: string;
@@ -29,16 +27,9 @@ interface TransactionFormProps {
     transferToId?: string;
     category?: string;
   };
-}
+};
 
-const TransactionForm: React.FC<TransactionFormProps> = ({
-  transaction,
-  onSave,
-  onCancel,
-  open,
-  onCreated,
-  prefill
-}) => {
+export default function TransactionForm({ open, onClose, onCreated, prefill }: Props) {
   const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
   const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
@@ -379,7 +370,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="flex-1">
@@ -391,5 +382,3 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
     </Card>
   );
 };
-
-export default TransactionForm;
