@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AccountQuickSheet from "@/components/accounts/AccountQuickSheet";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, AlertCircle, X } from 'lucide-react';
@@ -12,12 +11,14 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSearchParams } from 'react-router-dom';
+import AccountQuickSheet from "@/components/accounts/AccountQuickSheet";
 
 const Accounts: React.FC = () => {
   const { accountsVersion, reloadAll } = useAppContext();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [quick, setQuick] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -25,7 +26,6 @@ const Accounts: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
-  const [quick, setQuick] = useState<any | null>(null);
 
   useEffect(() => {
     loadAccounts();
@@ -171,7 +171,7 @@ const Accounts: React.FC = () => {
   const hasSeedData = accounts.some(acc => acc.is_seed);
 
   return (
-    <>
+    <div className="p-6 space-y-6">
       {hasSeedData && showWelcomeBanner && (
         <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-900/20">
           <AlertCircle className="h-4 w-4 text-orange-600" />
@@ -213,7 +213,8 @@ const Accounts: React.FC = () => {
           >
             <AccountCard
               account={a}
-              onClick={() => setQuick(a)}
+              onClick={() => setQuick(a)} // opens the quick actions panel
+              onEdit={(acc) => { setEditingAccount(acc); setIsModalOpen(true); }} // <-- pass onEdit
               onDelete={handleDeleteAccount}
             />
           </div>
@@ -257,9 +258,21 @@ const Accounts: React.FC = () => {
         </CardContent>
       </Card>
 
+      <AccountQuickSheet
+        open={!!quick}
+        onOpenChange={(v) => !v && setQuick(null)}
+        account={quick}
+        onEdit={(a) => {
+          setQuick(null);
+          setEditingAccount(a);
+          setIsModalOpen(true);
+        }}
+        onDelete={handleDeleteAccount}
+      />
+
       <AccountModal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        onClose={() => setIsModalOpen(false)}
         account={editingAccount}
         onSubmit={editingAccount ? handleUpdateAccount : handleCreateAccount}
       />
@@ -274,18 +287,7 @@ const Accounts: React.FC = () => {
         account={accountToDelete}
         loading={deleteLoading}
       />
-
-      <AccountQuickSheet
-        open={!!quick}
-        onOpenChange={(v) => !v && setQuick(null)}
-        account={quick}
-        onEdit={(a) => {
-          setQuick(null);
-          handleEdit(a);
-        }}
-        onDelete={handleDeleteAccount}
-      />
-    </>
+    </div>
   );
 };
 
