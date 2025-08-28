@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Transaction, CreateTransactionData, transactionService } from '@/services/TransactionService';
 import { Category, categoryService } from '@/services/CategoryService';
+import { accountService } from '@/services/AccountService';
 import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
@@ -20,10 +21,13 @@ interface TransactionFormProps {
   transaction?: Transaction;
   onSave: (transaction?: Transaction) => void;
   onCancel: () => void;
+  open?: boolean;
+  onCreated?: () => void; // 👈 added
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel }) => {
-  const { accounts, refreshData } = useAppContext();
+const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel, open, onCreated }) => {
+  const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
+  const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
   const [formData, setFormData] = useState<CreateTransactionData>({
     description: '',
@@ -40,9 +44,9 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
   const [error, setError] = useState<string>('');
   const [showTransferForm, setShowTransferForm] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<any>(null);
-  const [conversionRate, setConversionRate] = useState<number>(1);
-  const [convertedAmount, setConvertedAmount] = useState<number>(0);
-  const [targetCurrency, setTargetCurrency] = useState<string>('USD');
+  const [amountCurrency, setAmountCurrency] = useState<string>('USD');
+  const [fxRate, setFxRate] = useState<number | ''>('');
+  const [needsFx, setNeedsFx] = useState(false);
 
   useEffect(() => {
     loadCategories();
@@ -75,8 +79,30 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
     if (formData.accountId) {
       const account = accounts.find(a => a.id === formData.accountId);
       setSelectedAccount(account || null);
+      setAmountCurrency((cur) => cur || selectedAccount.currency);
     }
   }, [formData.accountId, accounts]);
+
+  useEffect(() => {
+    if (selectedAccount) {
+      const isCrossCurrency = selectedAccount.currency !== amountCurrency;
+      setNeedsFx(isCrossCurrency);
+      
+      if (isCrossCurrency) {
+        // Reset conversion fields if the selected account currency is different from the target currency
+        setFxRate('');
+      }
+    }
+  }, [selectedAccount, amountCurrency]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const list = await accountService.getAll();
+      if (!cancelled) setAccounts(list);
+    })();
+    return () => { cancelled = true; };
+  }, [open, accountsVersion]); // re-fetch when modal opens or accounts change
 
   const loadCategories = async () => {
     try {
@@ -104,7 +130,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
         throw new Error('Account not found');
       }
 
-      const isCrossCurrency = account.currency !== targetCurrency;
+      const isCrossCurrency = account.currency !== amountCurrency;
       
       const transactionData = {
         ...formData,
@@ -112,28 +138,31 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
         date: format(date, 'yyyy-MM-dd'),
         currency: account.currency,
         ...(isCrossCurrency && {
-          fxRate: conversionRate,
-          fxFrom: account.currency,
-          fxTo: targetCurrency,
-          convertedAmount
+          fxRate: fxRate,
+          fxFrom: amountCurrency,
+          fxTo: account.currency,
+          convertedAmount: formData.amount * fxRate
         })
       };
       
       let result;
       if (transaction) {
         result = await transactionService.update(transaction.id, transactionData);
+        toast({
+          title: 'Success',
+          description: 'Transaction updated successfully',
+        });
+        onSave(result);
       } else {
         result = await transactionService.create(transactionData);
+        toast({
+          title: 'Success',
+          description: 'Transaction created successfully',
+        });
+        onCreated?.(); // ✅ call parent reload
+        onSave(result);
       }
-      
-      await refreshData();
-      
-      toast({
-        title: 'Success',
-        description: `Transaction ${transaction ? 'updated' : 'created'} successfully`,
-      });
-      
-      onSave(result);
+      // refreshData(); // ❌ REMOVED
     } catch (error) {
       console.error('Error saving transaction:', error);
       setError(error instanceof Error ? error.message : 'Failed to save transaction');
@@ -159,7 +188,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
     );
   }
 
-  const showCurrencyConverter = selectedAccount && selectedAccount.currency !== targetCurrency;
+  const showCurrencyConverter = selectedAccount && selectedAccount.currency !== amountCurrency;
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -184,16 +213,32 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
             />
           </div>
 
-          <div>
-            <Label htmlFor="amount">Amount</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-              required
-            />
+          <div className="grid grid-cols-12 gap-3">
+            <div className="col-span-8">
+              <Label>Amount</Label>
+              <Input
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <div className="col-span-4">
+              <Label>Amount currency</Label>
+              <Select value={amountCurrency} onValueChange={setAmountCurrency}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[selectedAccount?.currency, 'USD','JMD','CAD','EUR','GBP']
+                    .filter(Boolean)
+                    .filter((v, i, a) => a.indexOf(v) === i) // unique
+                    .map(code => <SelectItem key={code as string} value={code as string}>{code}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
@@ -265,29 +310,54 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
               <SelectContent>
                 {accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
-                    {account.name} ({account.currency})
+                    {account.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {showCurrencyConverter && (
-            <CurrencyConverter
-              fromCurrency={selectedAccount.currency}
-              toCurrency={targetCurrency}
-              amount={formData.amount}
-              onRateChange={setConversionRate}
-              onConvertedAmountChange={setConvertedAmount}
-            />
+          {/* FX panel only when needed */}
+          {needsFx && (
+            <div className="rounded-lg border p-3">
+              <p className="text-sm font-medium text-blue-600">Currency conversion required</p>
+              <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="text-muted-foreground">From ({amountCurrency})</div>
+                  <div className="font-medium">
+                    {new Intl.NumberFormat(undefined, { style: 'currency', currency: amountCurrency }).format(formData.amount || 0)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground">To ({selectedAccount?.currency})</div>
+                  <div className="font-medium">
+                    {(() => {
+                      const rateNum = typeof fxRate === 'number' ? fxRate : 0;
+                      const converted = (formData.amount || 0) * rateNum;
+                      return new Intl.NumberFormat(undefined, { style: 'currency', currency: selectedAccount?.currency || 'USD' }).format(converted || 0);
+                    })()}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3">
+                <Label>Conversion rate (1 {amountCurrency} = ? {selectedAccount?.currency})</Label>
+                <Input
+                  type="number"
+                  value={fxRate}
+                  onChange={(e) => setFxRate(e.target.value === '' ? '' : Number(e.target.value))}
+                  min="0"
+                  step="0.00001"
+                />
+              </div>
+            </div>
           )}
 
-          <div className="flex space-x-2 pt-4">
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Saving...' : (transaction ? 'Update' : 'Create')}
-            </Button>
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-              Cancel
             </Button>
           </div>
         </form>

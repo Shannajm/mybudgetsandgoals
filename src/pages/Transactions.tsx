@@ -8,6 +8,7 @@ import TransactionListItem from '@/components/TransactionListItem';
 import TransactionFilter from '@/components/TransactionFilter';
 import { Transaction, transactionService } from '@/services/TransactionService';
 import { Account, accountService } from '@/services/AccountService';
+import { useToast } from "@/hooks/use-toast"; // 👈 add this import
 
 const Transactions: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +19,7 @@ const Transactions: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
   const [loading, setLoading] = useState(true);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const { toast } = useToast(); // 👈 add this
 
   useEffect(() => {
     loadData();
@@ -81,6 +83,16 @@ const Transactions: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await transactionService.delete(id); // reverses balances / or hard-deletes
+      await loadData();
+      toast({ title: "Transaction deleted" });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e?.message ?? "Please try again." });
+    }
+  };
+
   const getAccountName = (accountId: string) => {
     const account = accounts.find(acc => acc.id === accountId);
     return account?.name || 'Unknown Account';
@@ -140,6 +152,7 @@ const Transactions: React.FC = () => {
                   transaction={transaction}
                   accountName={getAccountName(transaction.accountId)}
                   onEdit={handleEditTransaction}
+                  onDelete={handleDelete} // 👈 pass it down
                   getAccountName={getAccountName}
                   getAccountCurrency={getAccountCurrency}
                 />
