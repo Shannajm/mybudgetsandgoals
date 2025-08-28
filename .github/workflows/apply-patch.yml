@@ -1,0 +1,48 @@
+name: Apply patch (no CLI)
+
+on:
+  workflow_dispatch:
+    inputs:
+      patch:
+        description: "Paste a unified diff (git patch) below"
+        required: true
+      branch:
+        description: "New branch name (optional)"
+        required: false
+        default: "ai-patch-${{ github.run_id }}"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Write patch to file
+        run: |
+          cat > changes.patch <<'PATCH'
+          ${{ inputs.patch }}
+          PATCH
+
+      - name: Apply patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "${{ inputs.branch }}"
+          git apply -p0 --whitespace=fix changes.patch
+          git add -A
+          git commit -m "Apply patch via workflow"
+          git push --set-upstream origin "${{ inputs.branch }}"
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: "Apply patch via workflow"
+          body: "Patch applied by workflow_dispatch"
+          branch: "${{ inputs.branch }}"
+          base: "main"
