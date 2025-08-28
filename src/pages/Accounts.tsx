@@ -18,7 +18,7 @@ const Accounts: React.FC = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [quick, setQuick] = useState<any | null>(null);
+  const [quick, setQuick] = useState<Account | null>(null); // ✅ correct type
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -97,6 +97,13 @@ const Accounts: React.FC = () => {
 
   const handleDeleteClick = (account: Account) => {
     setAccountToDelete(account);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteAccount = (id: string) => {
+    const acc = accounts.find(x => x.id === id);
+    if (!acc) return;
+    setAccountToDelete(acc);
     setDeleteDialogOpen(true);
   };
 
@@ -206,18 +213,13 @@ const Accounts: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {accounts.map((a) => (
-          <div
+          <AccountCard
             key={a.id}
-            className="rounded-xl border p-4 hover:bg-muted/50 cursor-pointer"
-            onClick={() => setQuick(a)}
-          >
-            <AccountCard
-              account={a}
-              onClick={() => setQuick(a)} // opens the quick actions panel
-              onEdit={(acc) => { setEditingAccount(acc); setIsModalOpen(true); }} // <-- pass onEdit
-              onDelete={handleDeleteAccount}
-            />
-          </div>
+            account={a}
+            onClick={() => setQuick(a)} // ✅ open Quick Actions
+            onEdit={(acc) => { setEditingAccount(acc); setIsModalOpen(true); }} // ✏️ works
+            onDelete={handleDeleteAccount} // 🗑 works
+          />
         ))}
       </div>
 
@@ -283,7 +285,29 @@ const Accounts: React.FC = () => {
           setDeleteDialogOpen(false);
           setAccountToDelete(null);
         }}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={async () => {
+          if (!accountToDelete) return;
+          setDeleteLoading(true);
+          try {
+            await accountService.deleteWithTransactions(accountToDelete.id);
+            await loadAccounts();
+            reloadAll();
+            toast({
+              title: 'Success',
+              description: `Account "${accountToDelete.name}" deleted successfully`
+            });
+          } catch (error) {
+            toast({
+              title: 'Error',
+              description: 'Failed to delete account',
+              variant: 'destructive'
+            });
+          } finally {
+            setDeleteLoading(false);
+            setDeleteDialogOpen(false);
+            setAccountToDelete(null);
+          }
+        }}
         account={accountToDelete}
         loading={deleteLoading}
       />
