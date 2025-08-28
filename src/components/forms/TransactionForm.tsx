@@ -62,6 +62,18 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [fxRate, setFxRate] = useState<number | ''>('');
   const [needsFx, setNeedsFx] = useState(false);
 
+  // Prefill logic when modal opens
+  useEffect(() => {
+    if (!open) return;
+    setFormData((prev) => ({
+      ...prev,
+      accountId: prefill?.accountId ?? prev.accountId,
+      type: prefill?.type ?? prev.type,
+      category: prefill?.category ?? prev.category,
+    }));
+    setTransferToId(prefill?.transferToId ?? '');
+  }, [open, prefill?.accountId, prefill?.type, prefill?.transferToId, prefill?.category]);
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -192,17 +204,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       setFormData({ ...formData, type: value, category: '' });
     }
   };
-
-  useEffect(() => {
-    if (!open) return;
-    setFormData((prev) => ({
-      ...prev,
-      accountId: prefill?.accountId || prev.accountId,
-      type: prefill?.type || prev.type,
-      category: prefill?.category || prev.category,
-    }));
-    setTransferToId(prefill?.transferToId || '');
-  }, [open, prefill?.accountId, prefill?.type, prefill?.transferToId, prefill?.category]);
 
   if (showTransferForm) {
     return (
