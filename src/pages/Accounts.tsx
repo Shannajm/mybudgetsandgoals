@@ -11,13 +11,12 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSearchParams } from 'react-router-dom';
-import AccountQuickSheet from "@/components/accounts/AccountQuickSheet"; // <-- ADD THIS IMPORT
-
 const Accounts: React.FC = () => {
   const { accountsVersion, reloadAll } = useAppContext();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [quick, setQuick] = useState<Account | null>(null); // ✅ correct type
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -114,6 +113,13 @@ const Accounts: React.FC = () => {
 
   const handleDeleteClick = (account: Account) => {
     setAccountToDelete(account);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteAccount = (id: string) => {
+    const acc = accounts.find(x => x.id === id);
+    if (!acc) return;
+    setAccountToDelete(acc);
     setDeleteDialogOpen(true);
   };
 
@@ -221,18 +227,6 @@ const Accounts: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accounts.map((account) => (
-          <div
-            key={account.id}
-            className="rounded-xl border p-4 hover:bg-muted/50 cursor-pointer"
-            onClick={() => setQuick(account)} // <-- OPEN QUICK SHEET ON CLICK
-          >
-            <AccountCard
-              account={account}
-              onClick={() => setQuick(account)}
-              onDelete={handleDeleteClick}
-            />
-          </div>
         ))}
       </div>
 
@@ -273,9 +267,21 @@ const Accounts: React.FC = () => {
         </CardContent>
       </Card>
 
+      <AccountQuickSheet
+        open={!!quick}
+        onOpenChange={(v) => !v && setQuick(null)}
+        account={quick}
+        onEdit={(a) => {
+          setQuick(null);
+          setEditingAccount(a);
+          setIsModalOpen(true);
+        }}
+        onDelete={handleDeleteAccount}
+      />
+
       <AccountModal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        onClose={() => setIsModalOpen(false)}
         account={editingAccount}
         onSubmit={editingAccount ? handleUpdateAccount : handleCreateAccount}
       />
@@ -286,7 +292,29 @@ const Accounts: React.FC = () => {
           setDeleteDialogOpen(false);
           setAccountToDelete(null);
         }}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={async () => {
+          if (!accountToDelete) return;
+          setDeleteLoading(true);
+          try {
+            await accountService.deleteWithTransactions(accountToDelete.id);
+            await loadAccounts();
+            reloadAll();
+            toast({
+              title: 'Success',
+              description: `Account "${accountToDelete.name}" deleted successfully`
+            });
+          } catch (error) {
+            toast({
+              title: 'Error',
+              description: 'Failed to delete account',
+              variant: 'destructive'
+            });
+          } finally {
+            setDeleteLoading(false);
+            setDeleteDialogOpen(false);
+            setAccountToDelete(null);
+          }
+        }}
         account={accountToDelete}
         loading={deleteLoading}
       />
