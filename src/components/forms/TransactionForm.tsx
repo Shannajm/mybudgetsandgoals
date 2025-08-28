@@ -22,9 +22,10 @@ interface TransactionFormProps {
   onSave: (transaction?: Transaction) => void;
   onCancel: () => void;
   open?: boolean;
+  onCreated?: () => void; // 👈 added
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel, open }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel, open, onCreated }) => {
   const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
   const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
@@ -147,18 +148,21 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
       let result;
       if (transaction) {
         result = await transactionService.update(transaction.id, transactionData);
+        toast({
+          title: 'Success',
+          description: 'Transaction updated successfully',
+        });
+        onSave(result);
       } else {
         result = await transactionService.create(transactionData);
+        toast({
+          title: 'Success',
+          description: 'Transaction created successfully',
+        });
+        onCreated?.(); // ✅ call parent reload
+        onSave(result);
       }
-      
-      await refreshData();
-      
-      toast({
-        title: 'Success',
-        description: `Transaction ${transaction ? 'updated' : 'created'} successfully`,
-      });
-      
-      onSave(result);
+      // refreshData(); // ❌ REMOVED
     } catch (error) {
       console.error('Error saving transaction:', error);
       setError(error instanceof Error ? error.message : 'Failed to save transaction');
