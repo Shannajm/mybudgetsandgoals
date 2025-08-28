@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Transaction, CreateTransactionData, transactionService } from '@/services/TransactionService';
 import { Category, categoryService } from '@/services/CategoryService';
+import { accountService } from '@/services/AccountService';
 import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
@@ -20,10 +21,12 @@ interface TransactionFormProps {
   transaction?: Transaction;
   onSave: (transaction?: Transaction) => void;
   onCancel: () => void;
+  open?: boolean;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel }) => {
-  const { accounts, refreshData } = useAppContext();
+const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, onCancel, open }) => {
+  const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
+  const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
   const [formData, setFormData] = useState<CreateTransactionData>({
     description: '',
@@ -90,6 +93,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
       }
     }
   }, [selectedAccount, amountCurrency]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const list = await accountService.getAll();
+      if (!cancelled) setAccounts(list);
+    })();
+    return () => { cancelled = true; };
+  }, [open, accountsVersion]); // re-fetch when modal opens or accounts change
 
   const loadCategories = async () => {
     try {
@@ -282,7 +294,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
             </Select>
           </div>
 
-          <div>(
+          <div>
             <Label htmlFor="account">Account</Label>
             <Select 
               value={formData.accountId} 
@@ -317,7 +329,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
                   <div className="font-medium">
                     {(() => {
                       const rateNum = typeof fxRate === 'number' ? fxRate : 0;
-                      const converted = (formData.amount || 0) * rateNum; // 1 FROM = fxRate TO
+                      const converted = (formData.amount || 0) * rateNum;
                       return new Intl.NumberFormat(undefined, { style: 'currency', currency: selectedAccount?.currency || 'USD' }).format(converted || 0);
                     })()}
                   </div>
@@ -336,12 +348,12 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ transaction, onSave, 
             </div>
           )}
 
-          <div className="flex space-x-2 pt-4">
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? 'Saving...' : (transaction ? 'Update' : 'Create')}
-            </Button>
-            <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-              Cancel
             </Button>
           </div>
         </form>
