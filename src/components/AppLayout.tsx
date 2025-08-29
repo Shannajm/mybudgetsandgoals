@@ -49,6 +49,7 @@ const AppLayout: React.FC = () => {
             <Route path="/income" element={<Income />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/savings" element={<Savings />} />
+            <Route path="/fixed-savings" element={<Savings />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/reports" element={<Reports />}>
               <Route path="spending" element={<SpendingByCategory />} />
