@@ -80,7 +80,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
         targetAmount: parseFloat(formData.targetAmount),
         currentSaved: formData.currentSaved,
         targetDate: formData.targetDate.toISOString().split('T')[0],
-        category: formData.category,
+        category: formData.category || 'Other',
         description: formData.description,
         accountId: trackingMode === 'account' ? formData.accountId : undefined
       };
@@ -194,8 +194,13 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
           </div>
 
           <div>
-            <Label htmlFor="category">Category</Label>
-            <Input id="category" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required />
+            <Label htmlFor="category">Category (Optional)</Label>
+            <Input
+              id="category"
+              placeholder="e.g., Travel"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            />
           </div>
 
           <div>
