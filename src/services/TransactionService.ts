@@ -332,6 +332,19 @@ class TransactionService {
       }
       // ––– end debug –––
       
+      // Additional precise update for credit accounts only (availableCredit/current balance)
+      if (data.accountId) {
+        try {
+          const acc = await accountService.getById(data.accountId);
+          if (acc && acc.type === 'credit') {
+            const delta = data.type === 'income' ? -Math.abs(data.amount) : Math.abs(data.amount);
+            await this.updateAccountBalanceAtomic(acc.id, delta);
+          }
+        } catch (err) {
+          console.error('[BALANCE] account update failed:', err);
+        }
+      }
+
       return {
         id: docRef.id,
         user_id: currentUser.uid,
