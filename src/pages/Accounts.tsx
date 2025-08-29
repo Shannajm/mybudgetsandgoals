@@ -40,7 +40,24 @@ const Accounts: React.FC = () => {
   const loadAccounts = async () => {
     try {
       const data = await accountService.getAll();
-      setAccounts(data);
+      // Enrich credit accounts with statement metrics
+      const enriched = await Promise.all(
+        data.map(async (a) => {
+          if (a.type !== 'credit') return a;
+          try {
+            const status = await accountService.getStatementStatus(a.id);
+            if (!status) return a;
+            return {
+              ...a,
+              paidThisCycle: status.amountPaidThisCycle,
+              owedOnStatement: status.owedOnStatement,
+            } as any;
+          } catch {
+            return a;
+          }
+        })
+      );
+      setAccounts(enriched);
     } catch (error) {
       console.error('Error loading accounts:', error);
       toast({
