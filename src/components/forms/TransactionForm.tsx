@@ -12,25 +12,9 @@ import { cn } from '@/lib/utils';
 import { Transaction, CreateTransactionData, transactionService } from '@/services/TransactionService';
 import { Category, categoryService } from '@/services/CategoryService';
 import { accountService } from '@/services/AccountService';
-import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
 import CurrencyConverter from './CurrencyConverter';
-
-type Props = {
-  open: boolean;
-  onClose: () => void;
-  onCreated?: () => void;
-  prefill?: {
-    accountId?: string;
-    type?: "income" | "expense" | "transfer";
-    transferToId?: string;
-    category?: string;
-  };
-};
-
-export default function TransactionForm({ open, onClose, onCreated, prefill }: Props) {
-  const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
   const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
   const [formData, setFormData] = useState<CreateTransactionData>({
@@ -53,9 +37,8 @@ export default function TransactionForm({ open, onClose, onCreated, prefill }: P
   const [fxRate, setFxRate] = useState<number | ''>('');
   const [needsFx, setNeedsFx] = useState(false);
 
-  // Prefill logic when modal opens
+  // Prefill when provided (e.g., via query params)
   useEffect(() => {
-    if (!open) return;
     setFormData((prev) => ({
       ...prev,
       accountId: prefill?.accountId ?? prev.accountId,
@@ -63,7 +46,10 @@ export default function TransactionForm({ open, onClose, onCreated, prefill }: P
       category: prefill?.category ?? prev.category,
     }));
     setTransferToId(prefill?.transferToId ?? '');
-  }, [open, prefill?.accountId, prefill?.type, prefill?.transferToId, prefill?.category]);
+    if (prefill?.type === 'transfer') {
+      setShowTransferForm(true);
+    }
+  }, [prefill]);
 
   useEffect(() => {
     loadCategories();
@@ -119,13 +105,17 @@ export default function TransactionForm({ open, onClose, onCreated, prefill }: P
       if (!cancelled) setAccounts(list);
     })();
     return () => { cancelled = true; };
-  }, [open, accountsVersion]); // re-fetch when modal opens or accounts change
+  }, []); // fetch accounts on mount
 
   const loadCategories = async () => {
     try {
-      const categoriesData = formData.type === 'transfer' 
+      const categoriesData = formData.type === 'transfer'
         ? await categoryService.getAll()
-        : await categoryService.getByType(formData.type);
+        : await (async () => {
+            const typeForIncomeExpense: 'income' | 'expense' =
+              formData.type === 'income' ? 'income' : 'expense';
+            return categoryService.getByType(typeForIncomeExpense);
+          })();
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -154,7 +144,7 @@ export default function TransactionForm({ open, onClose, onCreated, prefill }: P
         amount: formData.amount,
         date: format(date, 'yyyy-MM-dd'),
         currency: account.currency,
-        ...(isCrossCurrency && {
+        ...(isCrossCurrency && typeof fxRate === 'number' && {
           fxRate: fxRate,
           fxFrom: amountCurrency,
           fxTo: account.currency,
@@ -162,22 +152,21 @@ export default function TransactionForm({ open, onClose, onCreated, prefill }: P
         })
       };
       
-      let result;
+      
       if (transaction) {
-        result = await transactionService.update(transaction.id, transactionData);
+        await transactionService.update(transaction.id, transactionData);
         toast({
           title: 'Success',
           description: 'Transaction updated successfully',
         });
-        onSave(result);
+        onSave();
       } else {
-        result = await transactionService.create(transactionData);
+        await transactionService.create(transactionData);
         toast({
           title: 'Success',
           description: 'Transaction created successfully',
         });
-        onCreated?.(); // ✅ call parent reload
-        onSave(result);
+        onSave();
       }
       // refreshData(); // ❌ REMOVED
     } catch (error) {
@@ -201,6 +190,7 @@ export default function TransactionForm({ open, onClose, onCreated, prefill }: P
       <TransferForm
         onSave={() => onSave()}
         onCancel={onCancel}
+        prefill={{ toAccountId: transferToId, description: prefill?.category }}
       />
     );
   }

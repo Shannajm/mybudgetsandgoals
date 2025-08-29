@@ -18,9 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 interface TransferFormProps {
   onSave: () => void;
   onCancel: () => void;
+  prefill?: {
+    fromAccountId?: string;
+    toAccountId?: string;
+    description?: string;
+  };
 }
 
-const TransferForm: React.FC<TransferFormProps> = ({ onSave, onCancel }) => {
+const TransferForm: React.FC<TransferFormProps> = ({ onSave, onCancel, prefill }) => {
   const { reloadAll } = useAppContext();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -40,6 +45,18 @@ const TransferForm: React.FC<TransferFormProps> = ({ onSave, onCancel }) => {
   useEffect(() => {
     loadAccounts();
   }, []);
+
+  // Apply prefill when provided
+  useEffect(() => {
+    if (prefill?.fromAccountId || prefill?.toAccountId || prefill?.description) {
+      setFormData(prev => ({
+        ...prev,
+        ...(prefill.fromAccountId ? { fromAccountId: prefill.fromAccountId } : {}),
+        ...(prefill.toAccountId ? { toAccountId: prefill.toAccountId } : {}),
+        ...(prefill.description ? { description: prefill.description } : {}),
+      }));
+    }
+  }, [prefill]);
 
   useEffect(() => {
     if (formData.fromAccountId && formData.toAccountId) {
