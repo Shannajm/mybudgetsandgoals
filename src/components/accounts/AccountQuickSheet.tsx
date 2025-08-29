@@ -38,7 +38,7 @@ export default function AccountQuickSheet({
   const stats = useMemo(() => {
     if (!account) return null;
     const cur = account.currency || "USD";
-    const items: Array<{ label: string; value: string }> = [];
+    const items: Array<{ label: string; value: string; className?: string }> = [];
 
     items.push({
       label: isCredit ? "Current Balance" : "Current Balance",
@@ -52,11 +52,13 @@ export default function AccountQuickSheet({
       items.push({ label: "Available Credit", value: formatCurrency(avail, cur) });
       items.push({
         label: "Paid this cycle",
-        value: formatCurrency(Math.abs(account.paidThisCycle || 0), cur),
+        value: formatCurrency(Math.abs((account as any).paidThisCycle || 0), cur),
       });
+      const owed = (account as any).owedOnStatement ?? 0;
       items.push({
         label: "Owed on statement",
-        value: formatCurrency(Math.abs(account.owedOnStatement || 0), cur),
+        value: formatCurrency(owed, cur),
+        className: owed < 0 ? "text-green-600" : undefined,
       });
     }
 
@@ -88,7 +90,7 @@ export default function AccountQuickSheet({
               {stats?.map((s) => (
                 <div key={s.label} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{s.label}</span>
-                  <span className="font-medium">{s.value}</span>
+                  <span className={"font-medium " + (s.className ?? "")}>{s.value}</span>
                 </div>
               ))}
             </div>
@@ -149,4 +151,3 @@ export default function AccountQuickSheet({
     </Sheet>
   );
 }
-
