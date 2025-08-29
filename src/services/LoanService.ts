@@ -45,7 +45,7 @@ class LoanService {
       case 'weekly': return 52;
       case 'bi-weekly': return 26;
       case 'monthly': return 12;
-      case 'quarterly': return 4;a
+      case 'quarterly': return 4;
       default: return 12;
     }
   }
