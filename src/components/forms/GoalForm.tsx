@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, HelpCircle } from 'lucide-react';
+import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Goal, goalService } from '@/services/GoalService';
 import { Account, accountService } from '@/services/AccountService';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import InfoTip from '@/components/InfoTip';
 
 interface GoalFormProps {
   goal?: Goal;
@@ -112,15 +112,14 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
           <div>
             <div className="flex items-center gap-2">
               <Label>Tracking Method</Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="h-4 w-4 text-gray-400" />
-                </TooltipTrigger>
-                <TooltipContent side="top" align="center" className="max-w-xs whitespace-normal leading-snug">
-                  Link account: uses the selected account's balance as your saved amount automatically.
-                  Manual amount: enter and update the saved amount yourself.
-                </TooltipContent>
-              </Tooltip>
+              <InfoTip
+                text={
+                  <span>
+                    Link account: uses the selected account's balance as your saved amount automatically. Manual amount: enter
+                    and update the saved amount yourself.
+                  </span>
+                }
+              />
             </div>
             <div className="flex gap-4 mt-1">
               <label className="flex items-center gap-2 text-sm">
