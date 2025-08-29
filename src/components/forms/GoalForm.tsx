@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, HelpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Goal, goalService } from '@/services/GoalService';
 import { Account, accountService } from '@/services/AccountService';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface GoalFormProps {
   goal?: Goal;
@@ -109,7 +110,18 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label>Tracking Method</Label>
+            <div className="flex items-center gap-2">
+              <Label>Tracking Method</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-gray-400" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  Link account: uses the selected account's balance as your saved amount automatically.
+                  Manual amount: enter and update the saved amount yourself.
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <div className="flex gap-4 mt-1">
               <label className="flex items-center gap-2 text-sm">
                 <input type="radio" name="tracking" value="account" checked={trackingMode === 'account'} onChange={() => setTrackingMode('account')} />
@@ -207,4 +219,3 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
 };
 
 export default GoalForm;
-
