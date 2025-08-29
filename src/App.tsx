@@ -7,25 +7,34 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider, useAppContext } from "@/contexts/AppContext";
 import AppLayout from "@/components/AppLayout";
 import { AuthPage } from "@/components/auth/AuthPage";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthService } from "@/services/AuthService";
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { user, setUser } = useAppContext();
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const currentUser = await AuthService.getCurrentUser();
-      setUser(currentUser);
-    };
-    checkUser();
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        setUser(fbUser as any);
+      } else {
+        const fallback = await AuthService.getCurrentUser();
+        setUser(fallback);
+      }
+      setAuthReady(true);
+    });
+    return () => unsub();
   }, [setUser]);
 
-  if (!user) {
-    return <AuthPage />;
+  if (!authReady) {
+    return <div className="p-6">Loading…</div>;
   }
+  if (!user) return <AuthPage />;
 
   return <AppLayout />;
 };
