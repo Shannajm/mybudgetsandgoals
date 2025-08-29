@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, MoreVertical, CreditCard } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatCurrency } from '@/lib/utils';
-import { Loan } from '@/services/LoanService';
+import { Loan, loanService } from '@/services/LoanService';
 
 interface LoanCardProps {
   loan: Loan;
@@ -37,6 +37,8 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
       default: return frequency;
     }
   };
+
+  const projections = loanService.computeProjections(loan);
 
   return (
     <Card className="h-full">
@@ -79,6 +81,18 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
           <div className="flex justify-between text-sm">
             <span>Paid to Date</span>
             <span className="font-medium text-green-600">{formatCurrency(loan.principal - loan.balance, loan.currency)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Projected Total</span>
+            <span className="font-medium">{isFinite(projections.totalRepay) ? formatCurrency(projections.totalRepay, loan.currency) : '—'}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Remaining Interest</span>
+            <span className="font-medium">{isFinite(projections.remainingInterest) ? formatCurrency(projections.remainingInterest, loan.currency) : '—'}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Payments Left</span>
+            <span className="font-medium">{isFinite(projections.remainingPeriods) ? `${projections.remainingPeriods}` : '—'}</span>
           </div>
           {typeof loan.paymentsMade === 'number' && (
             <div className="flex justify-between text-sm">
