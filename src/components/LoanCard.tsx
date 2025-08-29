@@ -80,6 +80,12 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
             <span>Paid to Date</span>
             <span className="font-medium text-green-600">{formatCurrency(loan.principal - loan.balance, loan.currency)}</span>
           </div>
+          {typeof loan.paymentsMade === 'number' && (
+            <div className="flex justify-between text-sm">
+              <span>Payments Made</span>
+              <span className="font-medium">{loan.paymentsMade}</span>
+            </div>
+          )}
           
           <div className="flex justify-between text-sm">
             <span>Payment Amount</span>
