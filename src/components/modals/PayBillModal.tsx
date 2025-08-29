@@ -66,7 +66,10 @@ const PayBillModal: React.FC<PayBillModalProps> = ({
     setIsLoading(true);
     try {
       const isCrossCurrency = selectedAccount.currency !== bill.currency;
-      const sourceAmount = isCrossCurrency ? convertedAmount / conversionRate : bill.amount;
+      // Use the amount in the selected account's currency.
+      // `convertedAmount` already equals bill.amount * conversionRate (from -> to)
+      // so when paying from a different-currency account we should post that converted number.
+      const sourceAmount = isCrossCurrency ? convertedAmount : bill.amount;
       
       // Create the bill payment transaction in account's currency
       let transactionAmount;
