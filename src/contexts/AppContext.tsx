@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
+import type { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { accountService } from '@/services/AccountService';
 import { billService } from '@/services/BillService';
