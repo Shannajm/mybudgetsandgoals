@@ -17,7 +17,7 @@ const ProfileSettings: React.FC = () => {
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
-      setFullName(user.user_metadata?.full_name || '');
+      setFullName(user.displayName || '');
     }
   }, [user]);
 
@@ -30,15 +30,12 @@ const ProfileSettings: React.FC = () => {
         throw new Error(error);
       }
 
-      // Update local context
+      // Update local context (Firebase user has displayName)
       if (user) {
         setUser({
           ...user,
-          user_metadata: {
-            ...user.user_metadata,
-            full_name: fullName
-          }
-        });
+          displayName: fullName,
+        } as any);
       }
 
       toast({
