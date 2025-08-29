@@ -54,7 +54,7 @@ const FeatureNavigationCards: React.FC = () => {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {features.map((feature) => (
+      {[...features, { title: 'Fixed Savings', description: 'Forced savings & fixed deposits', icon: '💰', path: '/fixed-savings' }].map((feature) => (
         <Card 
           key={feature.title} 
           className="cursor-pointer hover:shadow-lg transition-shadow"
