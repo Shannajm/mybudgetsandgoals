@@ -7,7 +7,7 @@ import { Edit, Trash2, MoreVertical, CreditCard, HelpCircle } from 'lucide-react
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatCurrency } from '@/lib/utils';
 import { Loan, loanService } from '@/services/LoanService';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import InfoTip from '@/components/InfoTip';
 
 interface LoanCardProps {
   loan: Loan;
@@ -46,12 +46,7 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
   const LabelWithTip = ({ label, tip }: { label: string; tip: string }) => (
     <div className="flex items-center gap-1">
       <span>{label}</span>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
-        </TooltipTrigger>
-        <TooltipContent>{tip}</TooltipContent>
-      </Tooltip>
+      <InfoTip text={tip} />
     </div>
   );
 
@@ -156,4 +151,3 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
 };
 
 export default LoanCard;
-
