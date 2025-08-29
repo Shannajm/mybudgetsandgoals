@@ -210,9 +210,16 @@ const AccountForm: React.FC<AccountFormProps> = ({ account, onSubmit, onCancel }
 
           <div className="space-y-2">
             <Label>Current Balance (Read-only)</Label>
-            <div className={`p-2 bg-gray-100 dark:bg-gray-700 rounded border text-sm ${formatCurrencyWithSign(currentBalance, formData.currency).className}`}>
-              {formatCurrencyWithSign(currentBalance, formData.currency).text}
-            </div>
+            {(() => {
+              const val = currentBalance;
+              const text = formatCurrencyWithSign(val, formData.currency);
+              const color = val < 0 ? 'text-red-600' : 'text-green-600';
+              return (
+                <div className={`p-2 bg-gray-100 dark:bg-gray-700 rounded border text-sm ${color}`}>
+                  {text}
+                </div>
+              );
+            })()}
           </div>
 
           <div className="space-y-4 border-t pt-4">
