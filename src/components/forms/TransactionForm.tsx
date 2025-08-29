@@ -125,9 +125,13 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
 
   const loadCategories = async () => {
     try {
-      const categoriesData = formData.type === 'transfer' 
+      const categoriesData = formData.type === 'transfer'
         ? await categoryService.getAll()
-        : await categoryService.getByType(formData.type);
+        : await (async () => {
+            const typeForIncomeExpense: 'income' | 'expense' =
+              formData.type === 'income' ? 'income' : 'expense';
+            return categoryService.getByType(typeForIncomeExpense);
+          })();
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error loading categories:', error);
