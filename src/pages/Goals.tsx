@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Target, Edit, Trash2 } from 'lucide-react';
+import { Plus, Target, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
 import { goalService, Goal, GoalService } from '@/services/GoalService';
+import { accountService } from '@/services/AccountService';
 import GoalForm from '@/components/forms/GoalForm';
 import DeleteGoalDialog from '@/components/DeleteGoalDialog';
 
@@ -17,6 +18,7 @@ const Goals: React.FC = () => {
   const [editingGoal, setEditingGoal] = useState<Goal | undefined>(undefined);
   const [deleteGoal, setDeleteGoal] = useState<Goal | null>(null);
   const { toast } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadGoals();
@@ -52,11 +54,18 @@ const Goals: React.FC = () => {
     setShowForm(false);
     setEditingGoal(undefined);
     await loadGoals();
+    // Improve mobile UX: scroll back to top where the list starts
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingGoal(undefined);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleDeleteGoal = async () => {
@@ -78,6 +87,32 @@ const Goals: React.FC = () => {
       });
     } finally {
       setDeleteGoal(null);
+    }
+  };
+
+  const refreshLinkedBalances = async () => {
+    try {
+      setRefreshing(true);
+      const accounts = await accountService.getAll();
+      const byId = new Map(accounts.map(a => [a.id, a.currentBalance ?? a.balance]));
+      const updates = goals
+        .filter(g => !!g.accountId)
+        .map(async g => {
+          const bal = byId.get(g.accountId as string) ?? 0;
+          try {
+            await goalService.update(g.id, { currentSaved: bal });
+          } catch (e) {
+            console.error('Failed to update goal balance', g.id, e);
+          }
+        });
+      await Promise.all(updates);
+      await loadGoals();
+      toast({ title: 'Linked goals updated', description: 'Balances refreshed from accounts.' });
+    } catch (e) {
+      console.error('Error refreshing linked goals', e);
+      toast({ title: 'Error', description: 'Could not refresh linked goals', variant: 'destructive' });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -104,10 +139,16 @@ const Goals: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Goals</h1>
-        <Button onClick={handleAddGoal}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Goal
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={refreshLinkedBalances} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing…' : 'Refresh Balances'}
+          </Button>
+          <Button onClick={handleAddGoal}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Goal
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -208,7 +249,7 @@ const Goals: React.FC = () => {
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-[95vw] max-h-[85vh] overflow-y-auto sm:w-auto">
           <GoalForm
             goal={editingGoal}
             onSave={handleSaveGoal}
