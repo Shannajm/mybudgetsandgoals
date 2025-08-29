@@ -14,6 +14,7 @@ import { transactionService } from '@/services/TransactionService';
 import { formatCurrencyWithSign } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import CurrencyConverter from '../forms/CurrencyConverter';
+import { useToast } from '@/hooks/use-toast';
 
 interface LoanPaymentModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [conversionRate, setConversionRate] = useState<number>(1);
   const [convertedAmount, setConvertedAmount] = useState<number>(0);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen && loan) {
@@ -85,6 +87,16 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
     try {
       const isCrossCurrency = selectedAccount.currency !== loan.currency;
       const sourceAmount = isCrossCurrency ? convertedAmount / conversionRate : paymentAmount;
+      const available = selectedAccount.currentBalance ?? selectedAccount.balance ?? 0;
+      if (selectedAccount.type !== 'credit' && available < sourceAmount) {
+        setIsLoading(false);
+        toast({
+          title: 'Insufficient funds',
+          description: `This account has ${formatCurrencyWithSign(available, selectedAccount.currency)} available.`,
+          variant: 'destructive'
+        });
+        return;
+      }
       
       // Create the loan payment transaction in account's currency
       let transactionAmount;
