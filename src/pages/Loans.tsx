@@ -9,6 +9,7 @@ import LoanCard from '@/components/LoanCard';
 import LoanPaymentModal from '@/components/modals/LoanPaymentModal';
 import DeleteLoanDialog from '@/components/DeleteLoanDialog';
 import { useToast } from '@/hooks/use-toast';
+import { useAppContext } from '@/contexts/AppContext';
 
 const LoansPage: React.FC = () => {
   const [loans, setLoans] = useState<Loan[]>([]);
@@ -21,6 +22,7 @@ const LoansPage: React.FC = () => {
   const [loanToDelete, setLoanToDelete] = useState<Loan | null>(null);
   const [highlightedLoanId, setHighlightedLoanId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { accounts } = useAppContext();
 
   useEffect(() => {
     loadLoans();
@@ -187,10 +189,18 @@ const LoansPage: React.FC = () => {
       </Dialog>
 
       <LoanPaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
         loan={selectedLoanForPayment}
-        open={paymentModalOpen}
-        onOpenChange={setPaymentModalOpen}
-        onPaymentMade={handlePaymentMade}
+        accounts={accounts}
+        onMakePayment={async (loanId, accountId, amount, date) => {
+          try {
+            await loanService.applyPayment(loanId, amount);
+            await loadLoans();
+          } catch (e) {
+            console.error(e);
+          }
+        }}
       />
 
       <DeleteLoanDialog
