@@ -18,6 +18,7 @@ import NotFound from '@/pages/NotFound';
 import Reports from '@/pages/Reports';
 import SpendingByCategory from '@/pages/Reports/SpendingByCategory';
 import CashFlowOverTime from '@/pages/Reports/CashFlowOverTime';
+import Savings from '@/pages/Savings';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar } = useAppContext();
@@ -47,6 +48,7 @@ const AppLayout: React.FC = () => {
             <Route path="/bills" element={<Bills />} />
             <Route path="/income" element={<Income />} />
             <Route path="/goals" element={<Goals />} />
+            <Route path="/savings" element={<Savings />} />
             <Route path="/loans" element={<Loans />} />
             <Route path="/reports" element={<Reports />}>
               <Route path="spending" element={<SpendingByCategory />} />
