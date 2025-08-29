@@ -11,7 +11,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSearchParams } from 'react-router-dom';
-import AccountQuickSheet from "@/components/accounts/AccountQuickSheet";
+import AccountQuickSheet from "@/components/Accounts/AccountQuickSheet";
 
 const Accounts: React.FC = () => {
   const { accountsVersion, reloadAll } = useAppContext();
@@ -192,7 +192,7 @@ const Accounts: React.FC = () => {
   const totalsByCurrency = calculateTotalsByCurrency();
   const currencies = Object.keys(totalsByCurrency);
   const singleCurrency = currencies.length === 1;
-  const hasSeedData = accounts.some(acc => acc.is_seed);
+  const hasSeedData = (accounts as any[]).some((acc: any) => acc.is_seed);
 
   return (
     <div className="p-6 space-y-6">
