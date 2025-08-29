@@ -40,6 +40,27 @@ export interface CreateLoanData {
 }
 
 class LoanService {
+  private periodsPerYear(freq: string): number {
+    switch (freq) {
+      case 'weekly': return 52;
+      case 'bi-weekly': return 26;
+      case 'monthly': return 12;
+      case 'quarterly': return 4;
+      default: return 12;
+    }
+  }
+
+  private computeRemainingBalance(principal: number, annualRatePct: number, paymentAmount: number, paymentsMade: number, frequency: string): number {
+    if (!paymentsMade || paymentsMade <= 0) return principal;
+    const ppy = this.periodsPerYear(frequency);
+    const r = (annualRatePct / 100) / ppy;
+    if (r === 0) {
+      return Math.max(0, principal - paymentAmount * paymentsMade);
+    }
+    const growth = Math.pow(1 + r, paymentsMade);
+    const remaining = principal * growth - paymentAmount * ((growth - 1) / r);
+    return Math.max(0, remaining);
+  }
   async getAll(): Promise<Loan[]> {
     try {
       const currentUser = auth.currentUser;
@@ -102,11 +123,24 @@ class LoanService {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       
+      let resolvedBalance = data.balance;
+      if (data.paymentsMade !== undefined && data.paymentsMade > 0) {
+        if (resolvedBalance === undefined || resolvedBalance === data.principal) {
+          resolvedBalance = this.computeRemainingBalance(
+            data.principal,
+            data.interestRate,
+            data.paymentAmount,
+            data.paymentsMade,
+            data.paymentFrequency
+          );
+        }
+      }
+
       const docData = {
         userId: currentUser.uid,
         name: data.name,
         principal: data.principal,
-        balance: data.balance !== undefined ? data.balance : data.principal,
+        balance: resolvedBalance !== undefined ? resolvedBalance : data.principal,
         interestRate: data.interestRate,
         paymentAmount: data.paymentAmount,
         paymentFrequency: data.paymentFrequency,
@@ -140,10 +174,32 @@ class LoanService {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       
+      const existing = await this.getById(id);
+      
+      let resolvedBalance = data.balance;
+      if (data.paymentsMade !== undefined && data.paymentsMade > 0) {
+        const principal = data.principal !== undefined ? data.principal : (existing?.principal || 0);
+        const interestRate = data.interestRate !== undefined ? data.interestRate : (existing?.interestRate || 0);
+        const paymentAmount = data.paymentAmount !== undefined ? data.paymentAmount : (existing?.paymentAmount || 0);
+        const frequency = data.paymentFrequency !== undefined ? data.paymentFrequency : (existing?.paymentFrequency || 'monthly');
+        if (
+          principal > 0 && paymentAmount > 0 &&
+          (resolvedBalance === undefined || resolvedBalance === existing?.balance || resolvedBalance === principal)
+        ) {
+          resolvedBalance = this.computeRemainingBalance(
+            principal,
+            interestRate,
+            paymentAmount,
+            data.paymentsMade,
+            frequency
+          );
+        }
+      }
+
       const updateData = {
         ...(data.name !== undefined && { name: data.name }),
         ...(data.principal !== undefined && { principal: data.principal }),
-        ...(data.balance !== undefined && { balance: data.balance }),
+        ...(resolvedBalance !== undefined && { balance: resolvedBalance }),
         ...(data.interestRate !== undefined && { interestRate: data.interestRate }),
         ...(data.paymentAmount !== undefined && { paymentAmount: data.paymentAmount }),
         ...(data.paymentFrequency !== undefined && { paymentFrequency: data.paymentFrequency }),
