@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, ArrowLeftRight, Receipt, Target } from 'lucide-react';
+import { Plus, ArrowLeftRight, Receipt, Target, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { TransactionModal } from '@/components/modals/TransactionModal';
@@ -7,6 +7,8 @@ import { BillModal } from '@/components/modals/BillModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import TransferForm from '@/components/forms/TransferForm';
 import GoalForm from '@/components/forms/GoalForm';
+import AccountModal from '@/components/modals/AccountModal';
+import { accountService } from '@/services/AccountService';
 
 const QuickActions: React.FC = () => {
   const isMobile = useIsMobile();
@@ -14,6 +16,7 @@ const QuickActions: React.FC = () => {
   const [billModalOpen, setBillModalOpen] = useState(false);
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [accountModalOpen, setAccountModalOpen] = useState(false);
 
   const handleSave = () => {
     // Refresh data after save
@@ -43,6 +46,13 @@ const QuickActions: React.FC = () => {
   return (
     <>
       <div className="flex gap-3 mb-6">
+        <Button
+          onClick={() => setAccountModalOpen(true)}
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white"
+        >
+          <Wallet className="h-4 w-4" />
+          Add Account
+        </Button>
         <Button
           onClick={() => setTransactionModalOpen(true)}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
@@ -86,6 +96,16 @@ const QuickActions: React.FC = () => {
         isOpen={billModalOpen}
         onClose={() => setBillModalOpen(false)}
         onSave={handleSave}
+      />
+
+      <AccountModal
+        isOpen={accountModalOpen}
+        onClose={() => setAccountModalOpen(false)}
+        onSubmit={async (data) => {
+          await accountService.create(data);
+          handleSave();
+          setAccountModalOpen(false);
+        }}
       />
       
       <Dialog open={transferModalOpen} onOpenChange={setTransferModalOpen}>
