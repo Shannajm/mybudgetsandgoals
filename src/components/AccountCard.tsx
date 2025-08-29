@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"; // Added
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Edit, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrencyWithSign } from "@/lib/utils";
 import type { Account } from "@/services/AccountService";
 
 type Props = {
@@ -20,6 +20,8 @@ export default function AccountCard({ account, onClick, onEdit, onDelete }: Prop
   const nav = useNavigate(); // Added
   const cur = account.currency || "USD";
   const balance = account.currentBalance ?? account.balance ?? 0;
+  const balanceText = formatCurrencyWithSign(balance, cur);
+  const balanceClass = balance < 0 ? "text-red-600" : "";
 
   return (
     <Card
@@ -31,8 +33,8 @@ export default function AccountCard({ account, onClick, onEdit, onDelete }: Prop
         <div>
           <div className="text-sm text-muted-foreground capitalize">{account.type}</div>
           <div className="text-lg font-semibold">{account.name}</div>
-          <div className="mt-2 text-2xl font-bold">
-            {formatCurrency(Math.abs(balance), cur)}
+          <div className={`mt-2 text-2xl font-bold ${balanceClass}`}>
+            {balanceText}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Current Balance</div>
         </div>
