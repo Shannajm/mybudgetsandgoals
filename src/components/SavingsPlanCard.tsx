@@ -3,8 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { SavingsPlan } from '@/services/SavingsPlanService';
-import { HelpCircle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import InfoTip from '@/components/InfoTip';
 
 interface Props {
   plan: SavingsPlan;
@@ -67,11 +66,6 @@ export default SavingsPlanCard;
   const LabelWithTip = ({ label, tip }: { label: string; tip: string }) => (
     <div className="flex items-center gap-1">
       <span>{label}</span>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
-        </TooltipTrigger>
-        <TooltipContent>{tip}</TooltipContent>
-      </Tooltip>
+      <InfoTip text={tip} />
     </div>
   );
