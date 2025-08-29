@@ -18,6 +18,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navigation = [
   { name: 'Home', href: '/home', icon: Home },
@@ -34,7 +35,7 @@ const navigation = [
     href: '/reports', 
     icon: BarChart3,
     children: [
-      { name: 'Spending by Category', href: '/reports/spending-by-category' },
+      { name: 'Spending by Category', href: '/reports/spending' },
       { name: 'Cash Flow', href: '/reports/cash-flow' }
     ]
   },
@@ -48,6 +49,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [expandedItems, setExpandedItems] = useState<string[]>(['Reports']);
 
   const toggleExpanded = (itemName: string) => {
@@ -75,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href || (item.href === '/home' && location.pathname === '/');
             const isExpanded = expandedItems.includes(item.name);
-            const hasChildren = item.children && item.children.length > 0;
+            const hasChildren = !isMobile && item.children && item.children.length > 0;
             
             return (
               <div key={item.name}>
