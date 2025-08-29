@@ -23,6 +23,7 @@ export interface Loan {
   currency: string;
   accountId?: string;
   user_id: string;
+  paymentsMade?: number;
 }
 
 export interface CreateLoanData {
@@ -34,6 +35,8 @@ export interface CreateLoanData {
   nextDueDate: string;
   currency: string;
   accountId?: string;
+  balance?: number; // optional override for existing loans
+  paymentsMade?: number; // optional, number of already-made payments
 }
 
 class LoanService {
@@ -103,13 +106,14 @@ class LoanService {
         userId: currentUser.uid,
         name: data.name,
         principal: data.principal,
-        balance: data.principal,
+        balance: data.balance !== undefined ? data.balance : data.principal,
         interestRate: data.interestRate,
         paymentAmount: data.paymentAmount,
         paymentFrequency: data.paymentFrequency,
         nextDueDate: data.nextDueDate,
         currency: data.currency,
         accountId: data.accountId || '',
+        ...(data.paymentsMade !== undefined && { paymentsMade: data.paymentsMade }),
         createdAt: new Date().toISOString()
       };
       
@@ -146,6 +150,7 @@ class LoanService {
         ...(data.nextDueDate !== undefined && { nextDueDate: data.nextDueDate }),
         ...(data.currency !== undefined && { currency: data.currency }),
         ...(data.accountId !== undefined && { accountId: data.accountId }),
+        ...(data.paymentsMade !== undefined && { paymentsMade: data.paymentsMade }),
         updatedAt: new Date().toISOString()
       };
       
