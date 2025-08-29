@@ -217,6 +217,7 @@ class TransactionService {
       const fromCurrency = fromAccount.currency || 'USD';
       const toCurrency = toAccount.currency || 'USD';
       const convertedAmount = data.amount * data.rate;
+      const isCreditPayment = toAccount.type === 'credit';
       
       const withdrawalData = {
         userId: currentUser.uid,
@@ -224,7 +225,7 @@ class TransactionService {
         amount: -data.amount,
         type: 'transfer_out',
         date: data.date,
-        category: 'Transfer',
+        category: isCreditPayment ? 'Credit Card Payment' : 'Transfer',
         accountId: data.fromId,
         currency: fromCurrency,
         rate: data.rate,
@@ -236,10 +237,10 @@ class TransactionService {
       const depositData = {
         userId: currentUser.uid,
         description: data.description,
-        amount: convertedAmount,
+        amount: isCreditPayment ? -convertedAmount : convertedAmount,
         type: 'transfer_in',
         date: data.date,
-        category: 'Transfer',
+        category: isCreditPayment ? 'Credit Card Payment' : 'Transfer',
         accountId: data.toId,
         currency: toCurrency,
         rate: data.rate,
@@ -252,7 +253,10 @@ class TransactionService {
       await updateDoc(doc(db, 'transactions', withdrawalRef.id), { relatedTransactionId: depositRef.id });
       
       await this.updateAccountBalanceAtomic(data.fromId, -data.amount);
-      await this.updateAccountBalanceAtomic(data.toId, convertedAmount);
+      await this.updateAccountBalanceAtomic(
+        data.toId,
+        isCreditPayment ? -convertedAmount : convertedAmount
+      );
       
     } catch (error) {
       console.error('Error creating transfer:', error);
