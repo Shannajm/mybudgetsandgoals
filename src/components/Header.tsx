@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     location.pathname === href || (href === '/dashboard' && location.pathname === '/');
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm border-b">
+    <header className="sticky top-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur supports-[backdrop-filter]:backdrop-blur shadow-sm border-b">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           {isMobile && (
