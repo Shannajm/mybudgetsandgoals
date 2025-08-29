@@ -6,18 +6,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription
 } from "@/components/ui/sheet";
 import { formatCurrency } from "@/lib/utils";
-
-type Account = {
-  id: string;
-  name: string;
-  type: "checking" | "savings" | "credit" | string;
-  currency?: string;
-  balance?: number;
-  creditLimit?: number;
-  statementAmount?: number;
-  paidThisCycle?: number;
-  owedOnStatement?: number;
-};
+import type { Account } from "@/services/AccountService";
 
 export default function AccountQuickSheet({
   open,
