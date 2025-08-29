@@ -94,24 +94,16 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
             <span className="font-medium">{formatCurrency(loan.balance, loan.currency)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <LabelWithTip label="Paid to Date" tip="Principal paid so far = Principal − Current Balance." />
+            <LabelWithTip label="Paid to Date" tip="Principal paid so far = Principal �^' Current Balance." />
             <span className="font-medium text-green-600">{formatCurrency(loan.principal - loan.balance, loan.currency)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <LabelWithTip label="Projected Total" tip="Estimated total you will repay over the life of the loan at the current APR and installment." />
-            <span className="font-medium">{isFinite(projections.totalRepay) ? formatCurrency(projections.totalRepay, loan.currency) : '—'}</span>
+            <span className="font-medium">{isFinite(projections.totalRepay) ? formatCurrency(projections.totalRepay, loan.currency) : '�?"'}</span>
           </div>
           <div className="flex justify-between text-sm">
             <LabelWithTip label="Remaining Interest" tip="Estimated interest still to be paid assuming fixed installment and APR." />
-            <span className="font-medium">{isFinite(projections.remainingInterest) ? formatCurrency(projections.remainingInterest, loan.currency) : '—'}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <LabelWithTip label="Payments Left" tip="Projected number of installments remaining at the current installment amount." />
-            <span className="font-medium">{isFinite(projections.remainingPeriods) ? `${projections.remainingPeriods}` : '—'}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <LabelWithTip label="Payments Made" tip="Count of recorded loan payment transactions for this loan." />
-            <span className="font-medium">{paymentsMade}</span>
+            <span className="font-medium">{isFinite(projections.remainingInterest) ? formatCurrency(projections.remainingInterest, loan.currency) : '�?"'}</span>
           </div>
           <div className="flex justify-between text-sm">
             <LabelWithTip label="Total Paid (overall)" tip="Total of all repayments made so far, including both principal and interest." />
