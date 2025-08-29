@@ -36,6 +36,7 @@ export interface Transaction {
   fxTo?: string;
   convertedAmount?: number;
   created_at?: string;
+  deleted?: boolean;
 }
 
 export interface CreateTransactionData {
@@ -272,12 +273,12 @@ class TransactionService {
       const newBalance = account.balance + amount;
       const newAvailableCredit = (account.creditLimit || 0) - newBalance;
       await accountService.update(accountId, {
-        balance: newBalance,
+        currentBalance: newBalance,
         availableCredit: newAvailableCredit
       });
     } else {
       await accountService.update(accountId, {
-        balance: account.balance + amount
+        currentBalance: account.balance + amount
       });
     }
   }
