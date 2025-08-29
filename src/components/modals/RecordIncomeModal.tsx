@@ -24,7 +24,7 @@ const RecordIncomeModal: React.FC<RecordIncomeModalProps> = ({ income, onClose }
     amount: income.amount,
     type: 'income' as const,
     date: new Date().toISOString().split('T')[0],
-    categoryId: 'Income',
+    category: 'Income',
     accountId: income.accountId,
     created_at: new Date().toISOString()
   };
