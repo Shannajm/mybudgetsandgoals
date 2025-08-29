@@ -45,7 +45,7 @@ class LoanService {
       case 'weekly': return 52;
       case 'bi-weekly': return 26;
       case 'monthly': return 12;
-      case 'quarterly': return 4;
+      case 'quarterly': return 4;a
       default: return 12;
     }
   }
@@ -60,6 +60,55 @@ class LoanService {
     const growth = Math.pow(1 + r, paymentsMade);
     const remaining = principal * growth - paymentAmount * ((growth - 1) / r);
     return Math.max(0, remaining);
+  }
+
+  private ratePerPeriod(annualRatePct: number, frequency: string): number {
+    return (annualRatePct / 100) / this.periodsPerYear(frequency);
+  }
+
+  private simulateRepay(balance: number, r: number, paymentAmount: number): { periods: number; totalRepay: number; totalInterest: number } {
+    let b = balance;
+    let totalRepay = 0;
+    let totalInterest = 0;
+    let periods = 0;
+    const MAX_STEPS = 2000; // safety guard (~> 38 years weekly)
+    while (b > 0 && periods < MAX_STEPS) {
+      const interest = b * r;
+      const principalPayment = paymentAmount - interest;
+      if (principalPayment <= 0) {
+        // Payment too small to ever reduce balance
+        return { periods: Infinity as unknown as number, totalRepay: Infinity as unknown as number, totalInterest: Infinity as unknown as number };
+      }
+      const actualPrincipal = Math.min(principalPayment, b);
+      const actualPayment = actualPrincipal + interest;
+      b -= actualPrincipal;
+      totalRepay += actualPayment;
+      totalInterest += interest;
+      periods += 1;
+    }
+    return { periods, totalRepay, totalInterest };
+  }
+
+  // Public helper: projected totals for display
+  computeProjections(loan: Loan): {
+    totalRepay: number;
+    totalInterest: number;
+    remainingRepay: number;
+    remainingInterest: number;
+    totalPeriods: number;
+    remainingPeriods: number;
+  } {
+    const r = this.ratePerPeriod(loan.interestRate, loan.paymentFrequency);
+    const total = this.simulateRepay(loan.principal, r, loan.paymentAmount);
+    const remaining = this.simulateRepay(loan.balance, r, loan.paymentAmount);
+    return {
+      totalRepay: total.totalRepay,
+      totalInterest: total.totalRepay - loan.principal,
+      remainingRepay: remaining.totalRepay,
+      remainingInterest: remaining.totalRepay - loan.balance,
+      totalPeriods: total.periods,
+      remainingPeriods: remaining.periods,
+    };
   }
   async getAll(): Promise<Loan[]> {
     try {
@@ -123,17 +172,17 @@ class LoanService {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User not authenticated');
       
+      // If user provided number of payments already made, derive balance from amortization.
+      // (If you want to manually set balance, omit paymentsMade.)
       let resolvedBalance = data.balance;
       if (data.paymentsMade !== undefined && data.paymentsMade > 0) {
-        if (resolvedBalance === undefined || resolvedBalance === data.principal) {
-          resolvedBalance = this.computeRemainingBalance(
-            data.principal,
-            data.interestRate,
-            data.paymentAmount,
-            data.paymentsMade,
-            data.paymentFrequency
-          );
-        }
+        resolvedBalance = this.computeRemainingBalance(
+          data.principal,
+          data.interestRate,
+          data.paymentAmount,
+          data.paymentsMade,
+          data.paymentFrequency
+        );
       }
 
       const docData = {
@@ -182,10 +231,7 @@ class LoanService {
         const interestRate = data.interestRate !== undefined ? data.interestRate : (existing?.interestRate || 0);
         const paymentAmount = data.paymentAmount !== undefined ? data.paymentAmount : (existing?.paymentAmount || 0);
         const frequency = data.paymentFrequency !== undefined ? data.paymentFrequency : (existing?.paymentFrequency || 'monthly');
-        if (
-          principal > 0 && paymentAmount > 0 &&
-          (resolvedBalance === undefined || resolvedBalance === existing?.balance || resolvedBalance === principal)
-        ) {
+        if (principal > 0 && paymentAmount > 0) {
           resolvedBalance = this.computeRemainingBalance(
             principal,
             interestRate,
