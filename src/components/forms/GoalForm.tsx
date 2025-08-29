@@ -30,6 +30,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
   });
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
+  const [trackingMode, setTrackingMode] = useState<'account' | 'manual'>('account');
 
   useEffect(() => {
     loadAccounts();
@@ -46,6 +47,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
         description: goal.description || '',
         accountId: goal.accountId || ''
       });
+      setTrackingMode(goal.accountId ? 'account' : 'manual');
     }
   }, [goal]);
 
@@ -79,7 +81,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
         targetDate: formData.targetDate.toISOString().split('T')[0],
         category: formData.category,
         description: formData.description,
-        accountId: formData.accountId
+        accountId: trackingMode === 'account' ? formData.accountId : undefined
       };
 
       let savedGoal: Goal;
@@ -107,52 +109,60 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <Label>Tracking Method</Label>
+            <div className="flex gap-4 mt-1">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="tracking" value="account" checked={trackingMode === 'account'} onChange={() => setTrackingMode('account')} />
+                Link account (auto)
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" name="tracking" value="manual" checked={trackingMode === 'manual'} onChange={() => setTrackingMode('manual')} />
+                Manual amount
+              </label>
+            </div>
+          </div>
+
+          <div>
             <Label htmlFor="name">Goal Title</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
+            <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
           </div>
 
           <div>
             <Label htmlFor="targetAmount">Target Amount</Label>
-            <Input
-              id="targetAmount"
-              type="number"
-              step="0.01"
-              value={formData.targetAmount}
-              onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
-              required
-            />
+            <Input id="targetAmount" type="number" step="0.01" value={formData.targetAmount} onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })} required />
           </div>
 
-          <div>
-            <Label>Account</Label>
-            <Select value={formData.accountId} onValueChange={handleAccountChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map(account => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name} — {formatCurrency(account.currentBalance || 0)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {trackingMode === 'account' ? (
+            <>
+              <div>
+                <Label>Account</Label>
+                <Select value={formData.accountId} onValueChange={handleAccountChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map(account => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name} - {formatCurrency(account.currentBalance || 0)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">Current saved will match the account's current balance.</p>
+              </div>
 
-          <div>
-            <Label htmlFor="currentSaved">Current Saved</Label>
-            <Input
-              id="currentSaved"
-              value={formatCurrency(formData.currentSaved)}
-              readOnly
-              className="bg-gray-50 dark:bg-gray-800"
-            />
-          </div>
+              <div>
+                <Label htmlFor="currentSaved">Current Saved</Label>
+                <Input id="currentSaved" value={formatCurrency(formData.currentSaved)} readOnly className="bg-gray-50 dark:bg-gray-800" />
+              </div>
+            </>
+          ) : (
+            <div>
+              <Label htmlFor="currentSavedManual">Current Saved (manual)</Label>
+              <Input id="currentSavedManual" type="number" step="0.01" value={formData.currentSaved} onChange={(e) => setFormData({ ...formData, currentSaved: parseFloat(e.target.value) || 0 })} />
+              <p className="text-xs text-gray-500 mt-1">Enter how much you have saved so far.</p>
+            </div>
+          )}
 
           <div>
             <Label>Target Date</Label>
@@ -160,43 +170,26 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !formData.targetDate && "text-muted-foreground"
-                  )}
+                  className={cn('w-full justify-start text-left font-normal', !formData.targetDate && 'text-muted-foreground')}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {formData.targetDate ? format(formData.targetDate, "PPP") : "Pick a date"}
+                  {formData.targetDate ? format(formData.targetDate, 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={formData.targetDate}
-                  onSelect={(date) => date && setFormData({ ...formData, targetDate: date })}
-                  initialFocus
-                />
+                <Calendar mode="single" selected={formData.targetDate} onSelect={(date) => date && setFormData({ ...formData, targetDate: date })} initialFocus />
               </PopoverContent>
             </Popover>
           </div>
 
           <div>
             <Label htmlFor="category">Category</Label>
-            <Input
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              required
-            />
+            <Input id="category" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} required />
           </div>
 
           <div>
             <Label htmlFor="description">Description (Optional)</Label>
-            <Input
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
+            <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
           </div>
 
           <div className="flex gap-2">
@@ -214,3 +207,4 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
 };
 
 export default GoalForm;
+
