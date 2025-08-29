@@ -47,7 +47,7 @@ const ProfileDropdown: React.FC = () => {
     navigate('/settings/profile');
   };
 
-  const displayName = user?.user_metadata?.full_name || user?.email || 'User';
+  const displayName = (user?.displayName || user?.email || 'User');
 
   return (
     <DropdownMenu>
