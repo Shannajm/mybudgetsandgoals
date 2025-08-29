@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { SavingsPlan } from '@/services/SavingsPlanService';
+import { HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface Props {
   plan: SavingsPlan;
@@ -32,27 +34,27 @@ const SavingsPlanCard: React.FC<Props> = ({ plan, onContribute, onEdit }) => {
           <span className="font-medium">{formatCurrency(plan.amountPerPeriod, plan.currency)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Payments Made</span>
+          <LabelWithTip label="Payments Made" tip="Number of periods contributed so far." />
           <span className="font-medium">{plan.paymentsMade} / {plan.totalPeriods}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Weeks Left</span>
+          <LabelWithTip label="Weeks Left" tip="Total remaining periods to reach the goal." />
           <span className="font-medium">{remainingPeriods}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Paid to Date</span>
+          <LabelWithTip label="Paid to Date" tip="Sum of all contributions to date." />
           <span className="font-medium text-green-600">{formatCurrency(paidToDate, plan.currency)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Projected Total</span>
+          <LabelWithTip label="Projected Total" tip="amount × periods over the whole plan." />
           <span className="font-medium">{formatCurrency(projectedTotal, plan.currency)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Next Due</span>
+          <LabelWithTip label="Next Due" tip="Next scheduled contribution date." />
           <span className="font-medium">{new Date(plan.nextDueDate).toLocaleDateString()}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span>Progress</span>
+          <LabelWithTip label="Progress" tip="Payments made divided by total periods." />
           <span className="font-medium">{progress}%</span>
         </div>
         <Button className="w-full" onClick={() => onContribute(plan)}>Contribute</Button>
@@ -62,4 +64,14 @@ const SavingsPlanCard: React.FC<Props> = ({ plan, onContribute, onEdit }) => {
 };
 
 export default SavingsPlanCard;
-
+  const LabelWithTip = ({ label, tip }: { label: string; tip: string }) => (
+    <div className="flex items-center gap-1">
+      <span>{label}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
+        </TooltipTrigger>
+        <TooltipContent>{tip}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
