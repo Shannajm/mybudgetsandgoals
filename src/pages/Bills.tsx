@@ -6,7 +6,6 @@ import PayBillModal from '@/components/modals/PayBillModal';
 import StatCard from '@/components/StatCard';
 import BillsList from '@/components/BillsList';
 import { Bill, billService } from '@/services/BillService';
-import { transactionService } from '@/services/TransactionService';
 import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrencyWithSign } from '@/lib/utils';
@@ -92,40 +91,16 @@ const Bills: React.FC = () => {
 
   const handlePayBillSubmit = async (billId: string, accountId: string, amount: number, date: string) => {
     try {
-      const account = accounts.find(acc => acc.id === accountId);
-      if (!account) {
-        throw new Error('Account not found');
-      }
-
+      // Only update the bill's schedule; the actual transaction is created in PayBillModal.
       const bill = bills.find(b => b.id === billId);
-      if (!bill) {
-        throw new Error('Bill not found');
-      }
+      if (!bill) throw new Error('Bill not found');
 
-      // Create transaction based on account type
-      const transactionAmount = account.type === 'credit' ? amount : -amount;
-      await transactionService.create({
-        type: 'bill_payment',
-        amount: transactionAmount,
-        description: `Payment for ${bill.title}`,
-        date,
-        accountId,
-        category: bill.category,
-        billId
-      });
-
-      // Update bill's next due date
       const nextDueDate = calculateNextDueDate(bill.dueDate, bill.frequency);
-      await billService.update(billId, {
-        nextDueDate
-      });
+      await billService.update(billId, { nextDueDate });
 
       await refreshData();
 
-      toast({
-        title: 'Success',
-        description: `Payment for ${bill.title} processed successfully`
-      });
+      toast({ title: 'Success', description: `Payment for ${bill.title} processed successfully` });
     } catch (error) {
       console.error('Error processing bill payment:', error);
       toast({
