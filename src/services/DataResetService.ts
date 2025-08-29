@@ -22,7 +22,7 @@ class DataResetService {
       await Promise.all([
         ...transactions.map(t => transactionService.delete(t.id)),
         ...bills.map(b => billService.delete(b.id)),
-        ...incomes.map(i => incomeService.delete(i.id)),
+        ...incomes.map(i => incomeService.deleteIncome(i.id)),
         ...goals.map(g => goalService.delete(g.id)),
         ...loans.map(l => loanService.delete(l.id)),
         // ensure account transactions are removed atomically with each account
