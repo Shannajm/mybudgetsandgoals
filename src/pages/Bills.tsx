@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import BillModal from '@/components/modals/BillModal';
-import LoanPaymentModal from '@/components/modals/LoanPaymentModal';
 import PayBillModal from '@/components/modals/PayBillModal';
 import StatCard from '@/components/StatCard';
 import BillsList from '@/components/BillsList';
@@ -15,10 +14,8 @@ import { formatCurrencyWithSign } from '@/lib/utils';
 const Bills: React.FC = () => {
   const { bills, accounts, loading, refreshData } = useAppContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoanPaymentModalOpen, setIsLoanPaymentModalOpen] = useState(false);
   const [isPayBillModalOpen, setIsPayBillModalOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | undefined>();
-  const [selectedLoanId, setSelectedLoanId] = useState<string>('');
   const [billToPay, setBillToPay] = useState<Bill | null>(null);
   const { toast } = useToast();
 
@@ -28,13 +25,8 @@ const Bills: React.FC = () => {
   };
 
   const handleEditBill = (bill: Bill) => {
-    if (bill.source === 'loan') {
-      setSelectedLoanId(bill.id);
-      setIsLoanPaymentModalOpen(true);
-    } else {
-      setEditingBill(bill);
-      setIsModalOpen(true);
-    }
+    setEditingBill(bill);
+    setIsModalOpen(true);
   };
 
   const handlePayBill = (bill: Bill) => {
@@ -73,10 +65,7 @@ const Bills: React.FC = () => {
     await refreshData();
   };
 
-  const handleLoanPayment = async () => {
-    await refreshData();
-    setIsLoanPaymentModalOpen(false);
-  };
+  
 
   const calculateNextDueDate = (currentDueDate: string, frequency: string): string => {
     const date = new Date(currentDueDate);
@@ -263,12 +252,7 @@ const Bills: React.FC = () => {
         onSave={handleSaveBill}
       />
 
-      <LoanPaymentModal
-        isOpen={isLoanPaymentModalOpen}
-        onClose={() => setIsLoanPaymentModalOpen(false)}
-        loanId={selectedLoanId}
-        onPayment={handleLoanPayment}
-      />
+      {/* Loan payments are managed on the Loans page */}
 
       <PayBillModal
         isOpen={isPayBillModalOpen}
