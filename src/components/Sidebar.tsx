@@ -27,7 +27,7 @@ const navigation = [
   { name: 'Bills', href: '/bills', icon: Calendar },
   { name: 'Income', href: '/income', icon: DollarSign },
   { name: 'Goals', href: '/goals', icon: Target },
-  { name: 'Savings', href: '/savings', icon: PiggyBank },
+  { name: 'Fixed Savings', href: '/fixed-savings', icon: PiggyBank },
   { name: 'Loans', href: '/loans', icon: CreditCard },
   { 
     name: 'Reports', 
