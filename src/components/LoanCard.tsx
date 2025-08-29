@@ -72,6 +72,14 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
             <span>Current Balance</span>
             <span className="font-medium text-red-600">{formatCurrency(loan.balance, loan.currency)}</span>
           </div>
+          <div className="flex justify-between text-sm">
+            <span>Remaining Balance</span>
+            <span className="font-medium">{formatCurrency(loan.balance, loan.currency)}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Paid to Date</span>
+            <span className="font-medium text-green-600">{formatCurrency(loan.principal - loan.balance, loan.currency)}</span>
+          </div>
           
           <div className="flex justify-between text-sm">
             <span>Payment Amount</span>
