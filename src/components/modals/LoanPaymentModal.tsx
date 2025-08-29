@@ -41,11 +41,11 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
   useEffect(() => {
     if (isOpen && loan) {
       setSelectedAccountId('');
-      setPaymentAmount(loan.monthlyPayment || 0);
+      setPaymentAmount(loan.paymentAmount || 0);
       setPaymentDate(new Date());
       setSelectedAccount(null);
       setConversionRate(1);
-      setConvertedAmount(loan.monthlyPayment || 0);
+      setConvertedAmount(loan.paymentAmount || 0);
     }
   }, [isOpen, loan]);
 
@@ -68,12 +68,12 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
       const newBalance = account.balance + amount;
       const newAvailableCredit = (account.creditLimit || 0) - newBalance;
       await accountService.update(accountId, {
-        balance: newBalance,
+        currentBalance: newBalance,
         availableCredit: newAvailableCredit
       });
     } else {
       await accountService.update(accountId, {
-        balance: account.balance - amount
+        currentBalance: account.balance - amount
       });
     }
   };
@@ -95,7 +95,7 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
       }
 
       await transactionService.create({
-        description: `Loan payment: ${loan.title}`,
+        description: `Loan payment: ${loan.name}`,
         amount: transactionAmount,
         type: 'loan_payment',
         date: paymentDate.toISOString().split('T')[0],
@@ -115,7 +115,7 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
 
       // Create loan payment record in loan's currency
       await transactionService.create({
-        description: `Loan payment: ${loan.title}`,
+        description: `Loan payment: ${loan.name}`,
         amount: -paymentAmount,
         type: 'loan_payment',
         date: paymentDate.toISOString().split('T')[0],
@@ -152,7 +152,7 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Make Payment - {loan.title}</DialogTitle>
+          <DialogTitle>Make Payment - {loan.name}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -163,7 +163,7 @@ const LoanPaymentModal: React.FC<LoanPaymentModalProps> = ({
               step="0.01"
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
-              placeholder={`Suggested: ${formatCurrencyWithSign(loan.monthlyPayment || 0, loan.currency)}`}
+              placeholder={`Suggested: ${formatCurrencyWithSign(loan.paymentAmount || 0, loan.currency)}`}
             />
           </div>
           
