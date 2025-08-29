@@ -11,6 +11,7 @@ export interface Goal {
   status: 'active' | 'completed' | 'paused';
   user_id: string;
   accountId?: string;
+  description?: string;
 }
 
 export interface CreateGoalData {
@@ -20,6 +21,7 @@ export interface CreateGoalData {
   category: string;
   targetDate: string;
   accountId?: string;
+  description?: string;
 }
 
 export class GoalService {
@@ -71,6 +73,7 @@ export class GoalService {
         category: data.category,
         targetDate: data.targetDate,
         accountId: data.accountId,
+        ...(data.description !== undefined && { description: data.description }),
         status: 'active' as const,
         createdAt: new Date().toISOString()
       };
@@ -101,6 +104,7 @@ export class GoalService {
         ...(data.category !== undefined && { category: data.category }),
         ...(data.targetDate !== undefined && { targetDate: data.targetDate }),
         ...(data.accountId !== undefined && { accountId: data.accountId }),
+        ...(data.description !== undefined && { description: data.description }),
         updatedAt: new Date().toISOString()
       };
       
