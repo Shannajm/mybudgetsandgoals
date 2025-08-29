@@ -83,8 +83,10 @@ class AccountService {
         new Date(t.date) <= now
       );
 
+      // Payments for credit card are stored as negative amounts on the card account.
+      // Sum absolute value of negatives to get total paid, and allow owed to go negative (overpayment).
       const amountPaidThisCycle = Math.abs(payments.reduce((sum, p) => sum + p.amount, 0));
-      const owedOnStatement = Math.max(0, account.statementAmount - amountPaidThisCycle);
+      const owedOnStatement = (account.statementAmount || 0) - amountPaidThisCycle;
 
       return {
         statementAmount: account.statementAmount,
