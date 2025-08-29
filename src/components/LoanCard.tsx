@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, MoreVertical, CreditCard } from 'lucide-react';
+import { Edit, Trash2, MoreVertical, CreditCard, HelpCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatCurrency } from '@/lib/utils';
 import { Loan, loanService } from '@/services/LoanService';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface LoanCardProps {
   loan: Loan;
@@ -39,6 +40,20 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
   };
 
   const projections = loanService.computeProjections(loan);
+  const paymentsMade = loan.paymentsMade ?? 0;
+  const totalPaidOverall = (loan as any).totalPaidOverall ?? 0;
+
+  const LabelWithTip = ({ label, tip }: { label: string; tip: string }) => (
+    <div className="flex items-center gap-1">
+      <span>{label}</span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="h-3.5 w-3.5 text-gray-400" />
+        </TooltipTrigger>
+        <TooltipContent>{tip}</TooltipContent>
+      </Tooltip>
+    </div>
+  );
 
   return (
     <Card className="h-full">
@@ -79,27 +94,29 @@ const LoanCard: React.FC<LoanCardProps> = ({ loan, onEdit, onDelete, onMakePayme
             <span className="font-medium">{formatCurrency(loan.balance, loan.currency)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Paid to Date</span>
+            <LabelWithTip label="Paid to Date" tip="Principal paid so far = Principal − Current Balance." />
             <span className="font-medium text-green-600">{formatCurrency(loan.principal - loan.balance, loan.currency)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Projected Total</span>
+            <LabelWithTip label="Projected Total" tip="Estimated total you will repay over the life of the loan at the current APR and installment." />
             <span className="font-medium">{isFinite(projections.totalRepay) ? formatCurrency(projections.totalRepay, loan.currency) : '—'}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Remaining Interest</span>
+            <LabelWithTip label="Remaining Interest" tip="Estimated interest still to be paid assuming fixed installment and APR." />
             <span className="font-medium">{isFinite(projections.remainingInterest) ? formatCurrency(projections.remainingInterest, loan.currency) : '—'}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Payments Left</span>
+            <LabelWithTip label="Payments Left" tip="Projected number of installments remaining at the current installment amount." />
             <span className="font-medium">{isFinite(projections.remainingPeriods) ? `${projections.remainingPeriods}` : '—'}</span>
           </div>
-          {typeof loan.paymentsMade === 'number' && (
-            <div className="flex justify-between text-sm">
-              <span>Payments Made</span>
-              <span className="font-medium">{loan.paymentsMade}</span>
-            </div>
-          )}
+          <div className="flex justify-between text-sm">
+            <LabelWithTip label="Payments Made" tip="Count of recorded loan payment transactions for this loan." />
+            <span className="font-medium">{paymentsMade}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <LabelWithTip label="Total Paid (overall)" tip="Total of all repayments made so far, including both principal and interest." />
+            <span className="font-medium">{formatCurrency(totalPaidOverall, loan.currency)}</span>
+          </div>
           
           <div className="flex justify-between text-sm">
             <span>Payment Amount</span>
