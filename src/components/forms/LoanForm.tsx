@@ -23,7 +23,9 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
     paymentAmount: 0,
     paymentFrequency: 'monthly',
     nextDueDate: '',
-    currency: 'USD'
+    currency: 'USD',
+    balance: undefined,
+    paymentsMade: undefined,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -56,7 +58,9 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
         paymentAmount: loan.paymentAmount,
         paymentFrequency: loan.paymentFrequency,
         nextDueDate: loan.nextDueDate,
-        currency: loan.currency || 'USD'
+        currency: loan.currency || 'USD',
+        balance: loan.balance,
+        paymentsMade: loan.paymentsMade,
       });
     } else {
       const nextMonth = new Date();
@@ -85,6 +89,16 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
     if (formData.paymentAmount <= 0) {
       newErrors.paymentAmount = 'Payment amount must be greater than 0';
     }
+    if (formData.balance !== undefined) {
+      if (formData.balance < 0) {
+        newErrors.balance = 'Current balance cannot be negative';
+      } else if (formData.principal > 0 && formData.balance > formData.principal) {
+        newErrors.balance = 'Current balance cannot exceed principal';
+      }
+    }
+    if (formData.paymentsMade !== undefined && formData.paymentsMade < 0) {
+      newErrors.paymentsMade = 'Payments made cannot be negative';
+    }
     if (!formData.nextDueDate) {
       newErrors.nextDueDate = 'Next due date is required';
     }
@@ -109,10 +123,8 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
     try {
       let savedLoan: Loan;
       if (loan) {
-        // For updates, pass the current balance along with other fields
         savedLoan = await loanService.update(loan.id, {
           ...formData,
-          balance: loan.balance // Preserve current balance
         });
       } else {
         savedLoan = await loanService.create(formData);
@@ -130,7 +142,7 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
     }
   };
 
-  const handleInputChange = (field: keyof (CreateLoanData & { currency: string }), value: string | number) => {
+  const handleInputChange = (field: keyof (CreateLoanData & { currency: string }), value: string | number | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -197,6 +209,19 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="balance">Current Remaining Balance (if existing loan)</Label>
+          <Input
+            id="balance"
+            type="number"
+            step="0.01"
+            value={formData.balance ?? ''}
+            onChange={(e) => handleInputChange('balance', e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0))}
+            placeholder="Leave blank to set equal to principal"
+          />
+          {errors.balance && <p className="text-sm text-red-600">{errors.balance}</p>}
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="interestRate">Interest Rate (%)</Label>
           <Input
             id="interestRate"
@@ -220,6 +245,20 @@ const LoanForm: React.FC<LoanFormProps> = ({ loan, onSave, onCancel }) => {
             placeholder={`${formatCurrency(450, formData.currency)}`}
           />
           {errors.paymentAmount && <p className="text-sm text-red-600">{errors.paymentAmount}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="paymentsMade">Payments Already Made</Label>
+          <Input
+            id="paymentsMade"
+            type="number"
+            step="1"
+            min="0"
+            value={formData.paymentsMade ?? ''}
+            onChange={(e) => handleInputChange('paymentsMade', e.target.value === '' ? undefined : Math.max(0, parseInt(e.target.value) || 0))}
+            placeholder="e.g., 3"
+          />
+          {errors.paymentsMade && <p className="text-sm text-red-600">{errors.paymentsMade}</p>}
         </div>
 
         <div className="space-y-2">
