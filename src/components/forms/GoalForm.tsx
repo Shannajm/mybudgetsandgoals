@@ -116,7 +116,7 @@ const GoalForm: React.FC<GoalFormProps> = ({ goal, onSave, onCancel }) => {
                 <TooltipTrigger asChild>
                   <HelpCircle className="h-4 w-4 text-gray-400" />
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="top" align="center" className="max-w-xs whitespace-normal leading-snug">
                   Link account: uses the selected account's balance as your saved amount automatically.
                   Manual amount: enter and update the saved amount yourself.
                 </TooltipContent>
