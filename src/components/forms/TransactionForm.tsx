@@ -15,22 +15,6 @@ import { accountService } from '@/services/AccountService';
 import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
 import CurrencyConverter from './CurrencyConverter';
-
-type Prefill = {
-  accountId?: string;
-  type?: 'income' | 'expense' | 'transfer';
-  transferToId?: string;
-  category?: string;
-};
-
-type Props = {
-  transaction?: Transaction;
-  onSave: () => void;
-  onCancel: () => void;
-  prefill?: Prefill;
-};
-
-export default function TransactionForm({ transaction, onSave, onCancel, prefill }: Props) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
   const [formData, setFormData] = useState<CreateTransactionData>({
@@ -376,7 +360,7 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="flex-1">
@@ -388,4 +372,3 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
     </Card>
   );
 };
-
