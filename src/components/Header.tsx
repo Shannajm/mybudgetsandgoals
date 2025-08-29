@@ -21,6 +21,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     { name: 'Transactions', href: '/transactions' },
     { name: 'Bills', href: '/bills' },
     { name: 'Goals', href: '/goals' },
+    { name: 'Savings', href: '/savings' },
     { name: 'Loans', href: '/loans' },
     { name: 'Reports', href: '/reports' },
   ];
