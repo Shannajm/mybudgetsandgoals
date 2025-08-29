@@ -3,21 +3,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import TransactionForm from '@/components/forms/TransactionForm';
 import { Transaction } from '@/services/TransactionService';
 
+type Prefill = {
+  accountId?: string;
+  type?: 'income' | 'expense' | 'transfer';
+  transferToId?: string;
+  category?: string;
+};
+
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction?: Transaction;
-  onSave: () => void;
+  onSave?: () => void;
+  onCreated?: () => void;
+  prefill?: Prefill;
 }
 
 const TransactionModal: React.FC<TransactionModalProps> = ({
   isOpen,
   onClose,
   transaction,
-  onSave
+  onSave,
+  onCreated,
+  prefill,
 }) => {
   const handleSave = () => {
-    onSave();
+    // Call whichever callbacks were provided, then close.
+    onSave?.();
+    onCreated?.();
     onClose();
   };
 
@@ -31,6 +44,7 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         </DialogHeader>
         <TransactionForm
           transaction={transaction}
+          prefill={prefill}
           onSave={handleSave}
           onCancel={onClose}
         />

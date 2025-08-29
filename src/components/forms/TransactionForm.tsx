@@ -12,34 +12,25 @@ import { cn } from '@/lib/utils';
 import { Transaction, CreateTransactionData, transactionService } from '@/services/TransactionService';
 import { Category, categoryService } from '@/services/CategoryService';
 import { accountService } from '@/services/AccountService';
-import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
 import CurrencyConverter from './CurrencyConverter';
 
-interface TransactionFormProps {
-  transaction?: Transaction;
-  onSave: (transaction?: Transaction) => void;
-  onCancel: () => void;
-  open?: boolean;
-  onCreated?: () => void;
-  prefill?: {
-    accountId?: string;
-    type?: "income" | "expense" | "transfer";
-    transferToId?: string;
-    category?: string;
-  };
-}
+type Prefill = {
+  accountId?: string;
+  type?: 'income' | 'expense' | 'transfer';
+  transferToId?: string;
+  category?: string;
+};
 
-const TransactionForm: React.FC<TransactionFormProps> = ({
-  transaction,
-  onSave,
-  onCancel,
-  open,
-  onCreated,
-  prefill
-}) => {
-  const { accountsVersion } = useAppContext?.() ?? { accountsVersion: 0 };
+type Props = {
+  transaction?: Transaction;
+  onSave: () => void;
+  onCancel: () => void;
+  prefill?: Prefill;
+};
+
+export default function TransactionForm({ transaction, onSave, onCancel, prefill }: Props) {
   const [accounts, setAccounts] = useState<any[]>([]);
   const { toast } = useToast();
   const [formData, setFormData] = useState<CreateTransactionData>({
@@ -62,9 +53,8 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   const [fxRate, setFxRate] = useState<number | ''>('');
   const [needsFx, setNeedsFx] = useState(false);
 
-  // Prefill logic when modal opens
+  // Prefill when provided (e.g., via query params)
   useEffect(() => {
-    if (!open) return;
     setFormData((prev) => ({
       ...prev,
       accountId: prefill?.accountId ?? prev.accountId,
@@ -72,7 +62,10 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       category: prefill?.category ?? prev.category,
     }));
     setTransferToId(prefill?.transferToId ?? '');
-  }, [open, prefill?.accountId, prefill?.type, prefill?.transferToId, prefill?.category]);
+    if (prefill?.type === 'transfer') {
+      setShowTransferForm(true);
+    }
+  }, [prefill]);
 
   useEffect(() => {
     loadCategories();
@@ -128,7 +121,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       if (!cancelled) setAccounts(list);
     })();
     return () => { cancelled = true; };
-  }, [open, accountsVersion]); // re-fetch when modal opens or accounts change
+  }, []); // fetch accounts on mount
 
   const loadCategories = async () => {
     try {
@@ -163,7 +156,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         amount: formData.amount,
         date: format(date, 'yyyy-MM-dd'),
         currency: account.currency,
-        ...(isCrossCurrency && {
+        ...(isCrossCurrency && typeof fxRate === 'number' && {
           fxRate: fxRate,
           fxFrom: amountCurrency,
           fxTo: account.currency,
@@ -171,22 +164,21 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
         })
       };
       
-      let result;
+      
       if (transaction) {
-        result = await transactionService.update(transaction.id, transactionData);
+        await transactionService.update(transaction.id, transactionData);
         toast({
           title: 'Success',
           description: 'Transaction updated successfully',
         });
-        onSave(result);
+        onSave();
       } else {
-        result = await transactionService.create(transactionData);
+        await transactionService.create(transactionData);
         toast({
           title: 'Success',
           description: 'Transaction created successfully',
         });
-        onCreated?.(); // ✅ call parent reload
-        onSave(result);
+        onSave();
       }
       // refreshData(); // ❌ REMOVED
     } catch (error) {
@@ -210,6 +202,7 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
       <TransferForm
         onSave={() => onSave()}
         onCancel={onCancel}
+        prefill={{ toAccountId: transferToId, description: prefill?.category }}
       />
     );
   }
@@ -392,4 +385,3 @@ const TransactionForm: React.FC<TransactionFormProps> = ({
   );
 };
 
-export default TransactionForm;

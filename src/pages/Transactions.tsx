@@ -1,43 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, ArrowUpDown } from 'lucide-react';
-import { useSearchParams } from "react-router-dom"; // Add this import
+import { useSearchParams } from "react-router-dom";
 import TransactionModal from '@/components/modals/TransactionModal';
 import TransactionListItem from '@/components/TransactionListItem';
 import TransactionFilter from '@/components/TransactionFilter';
 import { Transaction, transactionService } from '@/services/TransactionService';
 import { Account, accountService } from '@/services/AccountService';
-import { useToast } from "@/hooks/use-toast"; // 👈 add this import
+import { useToast } from "@/hooks/use-toast";
 
 const Transactions: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>();
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const { toast } = useToast(); // 👈 add this
-
-  // Add this line to extract params for prefill
-  const prefill = {
-    accountId: searchParams.get("accountId") || undefined,
-    type: (searchParams.get("type") as any) || undefined,
-    transferToId: searchParams.get("to") || undefined,
-    category: searchParams.get("category") || undefined,
-  };
+  const { toast } = useToast();
 
   useEffect(() => {
     loadData();
   }, []);
 
   useEffect(() => {
-    // Handle URL parameters for filtering
+    if (searchParams.get("add") === "1") {
+      setIsAddOpen(true);
+    }
     const typeParam = searchParams.get('type');
     if (typeParam) {
-      console.log(`Filtering transactions by type: ${typeParam}`);
       setSelectedTypes([typeParam]);
     }
   }, [searchParams]);
@@ -93,7 +87,7 @@ const Transactions: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await transactionService.delete(id); // reverses balances / or hard-deletes
+      await transactionService.delete(id);
       await loadData();
       toast({ title: "Transaction deleted" });
     } catch (e: any) {
@@ -110,6 +104,13 @@ const Transactions: React.FC = () => {
     const account = accounts.find(acc => acc.id === accountId);
     return account?.currency || 'USD';
   };
+
+  const prefill = useMemo(() => ({
+    accountId: searchParams.get("accountId") || undefined,
+    type: (searchParams.get("type") as any) || undefined,
+    transferToId: searchParams.get("to") || undefined,
+    category: searchParams.get("category") || undefined,
+  }), [searchParams]);
 
   if (loading) {
     return (
@@ -160,7 +161,7 @@ const Transactions: React.FC = () => {
                   transaction={transaction}
                   accountName={getAccountName(transaction.accountId)}
                   onEdit={handleEditTransaction}
-                  onDelete={handleDelete} // 👈 pass it down
+                  onDelete={handleDelete}
                   getAccountName={getAccountName}
                   getAccountCurrency={getAccountCurrency}
                 />
@@ -177,11 +178,20 @@ const Transactions: React.FC = () => {
       </Card>
 
       <TransactionModal
+        isOpen={isAddOpen}
+        onClose={() => {
+          setIsAddOpen(false);
+          setSearchParams({});
+        }}
+        prefill={prefill}
+        onCreated={loadData}
+      />
+
+      <TransactionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         transaction={editingTransaction}
         onSave={handleSaveTransaction}
-        prefill={prefill} // 👈 Pass prefill prop here
       />
     </div>
   );

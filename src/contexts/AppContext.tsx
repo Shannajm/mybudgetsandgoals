@@ -18,6 +18,8 @@ interface AppContextType {
   transactions: Transaction[];
   loading: boolean;
   refreshData: () => Promise<void>;
+  accountsVersion: number;
+  dashboardVersion: number;
   reloadAccounts: () => void;
   reloadDashboardData: () => void;
   reloadBills: () => void;
@@ -48,7 +50,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [bills, setBills] = useState<Bill[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [accountsVersion, setAccountsVersion] = useState(0);
+  const [dashboardVersion, setDashboardVersion] = useState(0);
 
   const toggleSidebar = (open?: boolean) => {
     setSidebarOpen(open !== undefined ? open : !sidebarOpen);
@@ -90,19 +93,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   // Fetch data on mount and when user changes
   useEffect(() => {
     fetchAllData();
-  }, [user, refreshTrigger]);
+  }, [user, accountsVersion, dashboardVersion]);
 
-  const triggerRefresh = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
-
-  const reloadAccounts = triggerRefresh;
-  const reloadDashboardData = triggerRefresh;
-  const reloadBills = triggerRefresh;
-  const reloadIncome = triggerRefresh;
-  const reloadGoals = triggerRefresh;
-  const reloadLoans = triggerRefresh;
-  const reloadAll = triggerRefresh;
+  const reloadAccounts = () => setAccountsVersion(v => v + 1);
+  const reloadDashboardData = () => setDashboardVersion(v => v + 1);
+  const reloadBills = () => { setDashboardVersion(v => v + 1); };
+  const reloadIncome = () => { setDashboardVersion(v => v + 1); };
+  const reloadGoals = () => { setDashboardVersion(v => v + 1); };
+  const reloadLoans = () => { setDashboardVersion(v => v + 1); };
+  const reloadAll = () => { setAccountsVersion(v => v + 1); setDashboardVersion(v => v + 1); };
 
   const value = {
     sidebarOpen,
@@ -114,6 +113,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     transactions,
     loading,
     refreshData,
+    accountsVersion,
+    dashboardVersion,
     reloadAccounts,
     reloadDashboardData,
     reloadBills,
