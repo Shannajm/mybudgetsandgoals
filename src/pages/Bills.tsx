@@ -11,6 +11,8 @@ import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrencyWithSign } from '@/lib/utils';
 import ContributePlanModal from '@/components/modals/ContributePlanModal';
+import { HelpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Bills: React.FC = () => {
   const { bills, accounts, loading, refreshData } = useAppContext();
@@ -197,7 +199,15 @@ const Bills: React.FC = () => {
 
           {(savingsByCurrency[currency]?.length || 0) > 0 && (
             <div className="space-y-3">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-6">Fixed Savings Reminders ({currency})</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mt-6 flex items-center gap-2">
+                Fixed Savings Reminders ({currency})
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-gray-400" />
+                  </TooltipTrigger>
+                  <TooltipContent>Shows plans with a next due within 14 days.</TooltipContent>
+                </Tooltip>
+              </h3>
               <div className="space-y-2">
                 {savingsByCurrency[currency]
                   .filter(p => isDueWithin(p.nextDueDate, 14))
@@ -232,4 +242,3 @@ const Bills: React.FC = () => {
 };
 
 export default Bills;
-
