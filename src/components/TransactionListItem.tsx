@@ -174,11 +174,6 @@ const TransactionListItem: React.FC<TransactionListItemProps> = ({
           </div>
           <div className="flex items-center space-x-4">
             <span>{transaction.date}</span>
-            {transaction.balance && (
-              <span className="text-gray-400">
-                Balance: {formatCurrency(transaction.balance)}
-              </span>
-            )}
           </div>
         </div>
       </div>
