@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LoginForm } from './LoginForm';
 import { SignUpForm } from './SignUpForm';
-import { PiggyBank } from 'lucide-react';
+import LogoMark from '@/components/LogoMark';
 
 export const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,8 +14,8 @@ export const AuthPage: React.FC = () => {
 
       <div className="relative z-10 max-w-md w-full space-y-8">
         <div className="text-center space-y-3">
-          <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-fuchsia-600 flex items-center justify-center shadow-md">
-            <PiggyBank className="h-8 w-8 text-white" />
+          <div className="mx-auto h-14 w-14 rounded-2xl bg-white/90 dark:bg-white/10 flex items-center justify-center shadow-md ring-1 ring-black/5">
+            <LogoMark size={28} />
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-blue-700 to-fuchsia-700 dark:from-blue-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
             Personal Finance Manager
