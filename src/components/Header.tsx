@@ -24,6 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     { name: 'Fixed Savings', href: '/fixed-savings' },
     { name: 'Loans', href: '/loans' },
     { name: 'Reports', href: '/reports' },
+    { name: 'Settings', href: '/settings' },
   ];
 
   const isActive = (href: string) =>
