@@ -43,6 +43,15 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               <Menu className="h-5 w-5" />
             </Button>
           )}
+          {/* Brand */}
+          <Link to="/home" className="flex items-center gap-2 mr-1">
+            <img
+              src="https://mybudgetsandgoals.com/BudgetAndGoalsLogo.png"
+              alt="My Budgets & Goals"
+              className="h-5 w-auto"
+            />
+            <span className="hidden md:inline text-sm font-semibold text-gray-900 dark:text-white">BudgetPro</span>
+          </Link>
           {/* Top navigation tabs for desktop */}
           {!isMobile && (
             <nav className="flex items-center gap-1">
