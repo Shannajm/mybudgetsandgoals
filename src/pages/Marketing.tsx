@@ -45,7 +45,7 @@ const Marketing: React.FC = () => {
           <div className="h-10 w-10 rounded-xl bg-white/90 dark:bg-white/10 flex items-center justify-center shadow-sm ring-1 ring-black/5 overflow-hidden">
             <img src="https://mybudgetsandgoals.com/BudgetAndGoalsLogo.png" alt="My Budgets & Goals" className="h-6 w-auto" />
           </div>
-          <span className="font-extrabold text-lg">BudgetPro</span>
+          <span className="font-extrabold text-lg">My Budgets & Goals</span>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/auth" className="px-4 py-2 text-sm rounded-md border hover:bg-white dark:hover:bg-gray-900">Sign in</Link>
