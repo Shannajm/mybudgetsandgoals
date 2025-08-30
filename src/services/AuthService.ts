@@ -75,17 +75,9 @@ export const AuthService = {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      let userCredential;
-      try {
-        userCredential = await signInWithPopup(auth, provider);
-      } catch (popupErr: any) {
-        // Fallback to redirect if popup blocked
-        if (popupErr && popupErr.code && popupErr.code.includes('popup')) {
-          await signInWithRedirect(auth, provider);
-          return { user: null, error: null };
-        }
-        throw popupErr;
-      }
+      // Popup-only (no redirect fallback) so the consent screen shows
+      // the current site origin instead of the firebaseapp.com domain.
+      const userCredential = await signInWithPopup(auth, provider);
 
       const fbUser = userCredential.user;
       // Ensure user profile exists in Firestore
@@ -100,7 +92,11 @@ export const AuthService = {
       }
       return { user: fbUser, error: null };
     } catch (error: any) {
-      return { user: null, error: 'Google sign-in failed' };
+      const code = error?.code || '';
+      if (typeof code === 'string' && code.includes('popup')) {
+        return { user: null, error: 'Popup blocked or closed. Please allow popups for this site and try again.' };
+      }
+      return { user: null, error: 'Google sign-in failed. Please try again.' };
     }
   },
   async signUp(credentials: SignUpCredentials): Promise<{ user: User | null; error: string | null }> {
