@@ -14,6 +14,7 @@ import {
   CreditCard, 
   BarChart3, 
   Settings,
+  Tags,
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
@@ -39,6 +40,7 @@ const navigation = [
       { name: 'Cash Flow', href: '/reports/cash-flow' }
     ]
   },
+  { name: 'Categories', href: '/settings/categories', icon: Tags },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
