@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut } from 'lucide-react';
+import { User, Settings, LogOut, Tags } from 'lucide-react';
 import { AuthService } from '@/services/AuthService';
 import { useAppContext } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +47,14 @@ const ProfileDropdown: React.FC = () => {
     navigate('/settings/profile');
   };
 
+  const handleSettings = () => {
+    navigate('/settings');
+  };
+
+  const handleCategories = () => {
+    navigate('/settings/categories');
+  };
+
   const displayName = (user?.displayName || user?.email || 'User');
 
   return (
@@ -58,6 +66,14 @@ const ProfileDropdown: React.FC = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleSettings}>
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCategories}>
+          <Tags className="mr-2 h-4 w-4" />
+          Categories
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleProfile}>
           <Settings className="mr-2 h-4 w-4" />
           My Profile
