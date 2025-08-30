@@ -19,6 +19,7 @@ import Reports from '@/pages/Reports';
 import SpendingByCategory from '@/pages/Reports/SpendingByCategory';
 import CashFlowOverTime from '@/pages/Reports/CashFlowOverTime';
 import Savings from '@/pages/Savings';
+import ManageCategories from '@/pages/ManageCategories';
 
 const AppLayout: React.FC = () => {
   const { sidebarOpen, toggleSidebar } = useAppContext();
@@ -56,6 +57,7 @@ const AppLayout: React.FC = () => {
               <Route path="cash-flow" element={<CashFlowOverTime />} />
             </Route>
             <Route path="/settings" element={<Settings />} />
+            <Route path="/settings/categories" element={<ManageCategories />} />
             <Route path="/settings/profile" element={<ProfileSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
