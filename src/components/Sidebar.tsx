@@ -67,7 +67,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     )}>
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-between p-4 border-b">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">BudgetPro</h1>
+          <div className="flex items-center gap-2">
+            <img src="https://mybudgetsandgoals.com/BudgetAndGoalsLogo.png" alt="Logo" className="h-6 w-auto" />
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">BudgetPro</h1>
+          </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             ×
           </Button>
