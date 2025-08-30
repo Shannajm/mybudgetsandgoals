@@ -1,0 +1,15 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'>
+  <defs>
+    <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0%' stop-color='#eef2ff'/>
+      <stop offset='100%' stop-color='#f5d0fe'/>
+    </linearGradient>
+  </defs>
+  <rect width='800' height='400' fill='url(#g)'/>
+  <rect x='40' y='40' width='220' height='120' rx='12' fill='white' stroke='#e5e7eb'/>
+  <rect x='290' y='40' width='220' height='120' rx='12' fill='white' stroke='#e5e7eb'/>
+  <rect x='540' y='40' width='220' height='120' rx='12' fill='white' stroke='#e5e7eb'/>
+  <rect x='40' y='180' width='720' height='160' rx='12' fill='white' stroke='#e5e7eb'/>
+  <text x='50' y='75' font-size='18' fill='#111827' font-family='Inter, Arial, sans-serif'>Accounts</text>
+  <text x='60' y='215' font-size='18' fill='#111827' font-family='Inter, Arial, sans-serif'>Account Summary</text>
+</svg>
