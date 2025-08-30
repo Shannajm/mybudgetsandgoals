@@ -16,9 +16,16 @@ const Feature: React.FC<{ icon: React.ReactNode; title: string; desc: string }> 
 const ScreenshotCard: React.FC<{ title: string; desc: string; src?: string }> = ({ title, desc, src }) => (
   <div className="rounded-2xl border bg-white/70 dark:bg-gray-900/70 p-5 shadow-sm">
     {src ? (
-      <img src={src} alt={title} className="h-40 w-full object-cover rounded-lg border" />
+      <img
+        src={src}
+        alt={title}
+        loading="lazy"
+        decoding="async"
+        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+        className="aspect-[4/3] w-full object-cover rounded-lg border"
+      />
     ) : (
-      <div className="h-40 rounded-lg bg-gradient-to-tr from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center text-gray-400 text-sm">
+      <div className="aspect-[4/3] rounded-lg bg-gradient-to-tr from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center text-gray-400 text-sm">
         {title} preview
       </div>
     )}
@@ -35,8 +42,8 @@ const Marketing: React.FC = () => {
 
       <header className="relative z-10 mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-xl bg-white/90 dark:bg-white/10 flex items-center justify-center shadow-sm ring-1 ring-black/5">
-            <LogoMark />
+          <div className="h-10 w-10 rounded-xl bg-white/90 dark:bg-white/10 flex items-center justify-center shadow-sm ring-1 ring-black/5 overflow-hidden">
+            <img src="https://mybudgetsandgoals.com/BudgetAndGoalsLogo.png" alt="My Budgets & Goals" className="h-6 w-auto" />
           </div>
           <span className="font-extrabold text-lg">BudgetPro</span>
         </div>
@@ -109,6 +116,13 @@ const Marketing: React.FC = () => {
             Get started free <ArrowRight className="h-4 w-4" />
           </Link>
         </section>
+
+        {/* Footer */}
+        <footer className="mt-12 flex items-center justify-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+          <Link to="/privacy" className="hover:underline">Privacy</Link>
+          <span>•</span>
+          <Link to="/terms" className="hover:underline">Terms</Link>
+        </footer>
       </main>
     </div>
   );
