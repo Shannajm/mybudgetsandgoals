@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Wallet, Calendar, Target, BarChart3, CreditCard } from 'lucide-react';
 import LogoMark from '@/components/LogoMark';
+import { AuthService } from '@/services/AuthService';
 
 const Feature: React.FC<{ icon: React.ReactNode; title: string; desc: string }> = ({ icon, title, desc }) => (
   <div className="flex items-start gap-3 p-4 rounded-xl border bg-white/70 dark:bg-gray-900/70">
@@ -34,6 +35,18 @@ const ScreenshotCard: React.FC<{ title: string; desc: string; src?: string }> = 
 );
 
 const Marketing: React.FC = () => {
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogle = async () => {
+    try {
+      setGoogleLoading(true);
+      await AuthService.signInWithGoogle();
+      // If popup works, auth state will set user; if popup fails, we redirect and auth state updates after redirect.
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-50 dark:bg-gray-950 overflow-x-hidden">
       {/* background accents */}
@@ -48,7 +61,18 @@ const Marketing: React.FC = () => {
           <span className="font-extrabold text-lg">My Budgets & Goals</span>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/auth" className="px-4 py-2 text-sm rounded-md border hover:bg-white dark:hover:bg-gray-900">Sign in</Link>
+          <button
+            onClick={handleGoogle}
+            className="px-4 py-2 text-sm rounded-md border hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-4 w-4">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 6.1 28.9 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.5 18.9 14 24 14c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 6.1 28.9 4 24 4 16.1 4 9.2 8.5 6.3 14.7z"/>
+              <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.1C29.2 35.6 26.8 36 24 36c-5.2 0-9.6-3.3-11.2-7.9l-6.5 5C9.2 39.5 16.1 44 24 44z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 3-3.3 5.4-6.1 6.7l.1.1 6.2 5.1c-.4.4 6.5-3.8 6.5-12.9 0-1.2-.1-2.3-.4-3.5z"/>
+            </svg>
+            Continue with Google
+          </button>
           <Link to="/auth" className="px-4 py-2 text-sm rounded-md bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1">
             Get started <ArrowRight className="h-4 w-4" />
           </Link>
@@ -66,7 +90,18 @@ const Marketing: React.FC = () => {
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link to="/auth" className="px-5 py-2.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white">Create free account</Link>
-            <Link to="/auth" className="px-5 py-2.5 rounded-md border hover:bg-white dark:hover:bg-gray-900">Sign in</Link>
+            <button
+              onClick={handleGoogle}
+              className="px-5 py-2.5 rounded-md border hover:bg-white dark:hover:bg-gray-900 inline-flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-5 w-5">
+                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 6.1 28.9 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/>
+                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.5 18.9 14 24 14c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 6.1 28.9 4 24 4 16.1 4 9.2 8.5 6.3 14.7z"/>
+                <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.1C29.2 35.6 26.8 36 24 36c-5.2 0-9.6-3.3-11.2-7.9l-6.5 5C9.2 39.5 16.1 44 24 44z"/>
+                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 3-3.3 5.4-6.1 6.7l.1.1 6.2 5.1c-.4.4 6.5-3.8 6.5-12.9 0-1.2-.1-2.3-.4-3.5z"/>
+              </svg>
+              Continue with Google
+            </button>
           </div>
         </section>
 
@@ -111,10 +146,22 @@ const Marketing: React.FC = () => {
           </div>
         </section>
 
-        <section className="text-center mt-12">
+        <section className="text-center mt-12 flex items-center justify-center gap-3">
           <Link to="/auth" className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-blue-600 hover:bg-blue-700 text-white">
             Get started free <ArrowRight className="h-4 w-4" />
           </Link>
+          <button
+            onClick={handleGoogle}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-md border hover:bg-white dark:hover:bg-gray-900"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className="h-5 w-5">
+              <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 6.1 28.9 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/>
+              <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.5 18.9 14 24 14c3 0 5.7 1.1 7.8 3l5.7-5.7C33.5 6.1 28.9 4 24 4 16.1 4 9.2 8.5 6.3 14.7z"/>
+              <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.1C29.2 35.6 26.8 36 24 36c-5.2 0-9.6-3.3-11.2-7.9l-6.5 5C9.2 39.5 16.1 44 24 44z"/>
+              <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 3-3.3 5.4-6.1 6.7l.1.1 6.2 5.1c-.4.4 6.5-3.8 6.5-12.9 0-1.2-.1-2.3-.4-3.5z"/>
+            </svg>
+            Continue with Google
+          </button>
         </section>
 
         {/* Footer */}
