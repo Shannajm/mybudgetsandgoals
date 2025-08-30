@@ -1,5 +1,5 @@
 import { db, auth } from '@/lib/firebase';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export interface Category {
   id: string;
@@ -95,6 +95,35 @@ class CategoryService {
     });
 
     return { id: docRef.id, name: trimmed, type, color: 'slate', source: 'custom' };
+  }
+
+  async update(id: string, updates: Partial<Pick<Category, 'name' | 'color'>>): Promise<void> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('User not authenticated');
+    if (!id || id.startsWith('d')) {
+      throw new Error('Default categories cannot be edited');
+    }
+    const payload: any = {};
+    if (typeof updates.name === 'string') {
+      const trimmed = updates.name.trim();
+      if (!trimmed) throw new Error('Category name is required');
+      payload.name = trimmed;
+    }
+    if (typeof updates.color === 'string') {
+      payload.color = updates.color;
+    }
+    if (Object.keys(payload).length === 0) return;
+
+    await updateDoc(doc(db, 'categories', id), payload);
+  }
+
+  async delete(id: string): Promise<void> {
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('User not authenticated');
+    if (!id || id.startsWith('d')) {
+      throw new Error('Default categories cannot be deleted');
+    }
+    await deleteDoc(doc(db, 'categories', id));
   }
 }
 
