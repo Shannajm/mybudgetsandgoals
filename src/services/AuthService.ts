@@ -1,14 +1,16 @@
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut as firebaseSignOut,
   updateProfile,
   sendPasswordResetEmail,
-  User
+  User,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 
 interface LoginCredentials {
   email: string;
@@ -68,6 +70,39 @@ const setCurrentStoredUser = (user: UserProfile | null) => {
 };
 
 export const AuthService = {
+  async signInWithGoogle(): Promise<{ user: User | null; error: string | null }> {
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      let userCredential;
+      try {
+        userCredential = await signInWithPopup(auth, provider);
+      } catch (popupErr: any) {
+        // Fallback to redirect if popup blocked
+        if (popupErr && popupErr.code && popupErr.code.includes('popup')) {
+          await signInWithRedirect(auth, provider);
+          return { user: null, error: null };
+        }
+        throw popupErr;
+      }
+
+      const fbUser = userCredential.user;
+      // Ensure user profile exists in Firestore
+      const userRef = doc(db, 'users', fbUser.uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          fullName: fbUser.displayName || '',
+          email: fbUser.email || '',
+          createdAt: new Date().toISOString()
+        });
+      }
+      return { user: fbUser, error: null };
+    } catch (error: any) {
+      return { user: null, error: 'Google sign-in failed' };
+    }
+  },
   async signUp(credentials: SignUpCredentials): Promise<{ user: User | null; error: string | null }> {
     try {
       // Try Firebase first
