@@ -10,7 +10,8 @@ import { AuthPage } from "@/components/auth/AuthPage";
 import { useEffect, useState } from "react";
 import { AuthService } from "@/services/AuthService";
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import Marketing from "@/pages/Marketing";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
@@ -24,6 +25,18 @@ const AppContent = () => {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
+        try {
+          // Ensure user profile exists (needed for Google redirect flow)
+          const ref = doc(db, 'users', fbUser.uid);
+          const snap = await getDoc(ref);
+          if (!snap.exists()) {
+            await setDoc(ref, {
+              fullName: fbUser.displayName || '',
+              email: fbUser.email || '',
+              createdAt: new Date().toISOString()
+            });
+          }
+        } catch {}
         setUser(fbUser as any);
       } else {
         const fallback = await AuthService.getCurrentUser();
