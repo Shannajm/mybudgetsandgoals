@@ -50,7 +50,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               alt="My Budgets & Goals"
               className="h-5 w-auto"
             />
-            <span className="hidden md:inline text-sm font-semibold text-gray-900 dark:text-white">BudgetPro</span>
+            <span
+              className="hidden md:inline text-sm font-semibold text-gray-900 dark:text-white max-w-[14rem] truncate"
+              title="My Budgets & Goals"
+            >
+              My Budgets & Goals
+            </span>
           </Link>
           {/* Top navigation tabs for desktop */}
           {!isMobile && (
