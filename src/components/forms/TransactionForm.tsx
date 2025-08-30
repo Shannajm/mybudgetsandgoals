@@ -15,6 +15,7 @@ import { accountService } from '@/services/AccountService';
 import { useToast } from '@/hooks/use-toast';
 import TransferForm from './TransferForm';
 import CurrencyConverter from './CurrencyConverter';
+import AddCategoryDialog from '@/components/modals/AddCategoryDialog';
 
 type Prefill = {
   accountId?: string;
@@ -44,6 +45,7 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
   const [transferToId, setTransferToId] = useState<string>(prefill?.transferToId || '');
 
   const [categories, setCategories] = useState<Category[]>([]);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
@@ -135,6 +137,14 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
       setCategories(categoriesData);
     } catch (error) {
       console.error('Error loading categories:', error);
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    if (value === '__add__') {
+      setShowAddCategory(true);
+    } else {
+      setFormData({ ...formData, category: value });
     }
   };
 
@@ -306,12 +316,12 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
 
           <div>
             <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => 
-              setFormData({ ...formData, category: value })}>
+            <Select value={formData.category} onValueChange={handleCategoryChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__add__" className="text-blue-600">+ Add new category</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.name}>
                     {category.name}
@@ -385,7 +395,23 @@ export default function TransactionForm({ transaction, onSave, onCancel, prefill
           </div>
         </form>
       </CardContent>
+      <AddCategoryDialog
+        open={showAddCategory}
+        onOpenChange={setShowAddCategory}
+        defaultType={formData.type === 'income' ? 'income' : 'expense'}
+        onCreated={(c) => {
+          setCategories((prev) => {
+            if (prev.some(p => p.name.toLowerCase() === c.name.toLowerCase())) return prev;
+            return [...prev, c];
+          });
+          setFormData({ ...formData, category: c.name });
+        }}
+      />
     </Card>
   );
 };
+
+// Dialog for adding category
+// Renders next to the form so it can update state
+//
 
