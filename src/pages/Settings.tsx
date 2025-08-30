@@ -9,7 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { dataResetService } from '@/services/DataResetService';
-import { Moon, Sun, Trash2 } from 'lucide-react';
+import { Moon, Sun, Trash2, Tags } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Settings: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -57,6 +58,22 @@ const Settings: React.FC = () => {
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
       
       <div className="space-y-6">
+        {/* Categories quick link */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tags className="h-5 w-5" />
+              Categories
+            </CardTitle>
+            <CardDescription>Manage transaction categories you added</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link to="/settings/categories">
+              <Button>Manage Categories</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
         {/* Theme Settings */}
         <Card>
           <CardHeader>
