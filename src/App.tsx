@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HashRouter } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppProvider, useAppContext } from "@/contexts/AppContext";
 import AppLayout from "@/components/AppLayout";
@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { AuthService } from "@/services/AuthService";
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Marketing from "@/pages/Marketing";
 
 const queryClient = new QueryClient();
 
@@ -34,9 +35,22 @@ const AppContent = () => {
   if (!authReady) {
     return <div className="p-6">Loading…</div>;
   }
-  if (!user) return <AuthPage />;
-
-  return <AppLayout />;
+  return (
+    <Routes>
+      {user ? (
+        <>
+          <Route path="/*" element={<AppLayout />} />
+          <Route path="/auth" element={<Navigate to="/" replace />} />
+        </>
+      ) : (
+        <>
+          <Route path="/" element={<Marketing />} />
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </>
+      )}
+    </Routes>
+  );
 };
 
 const App = () => (
