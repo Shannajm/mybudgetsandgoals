@@ -8,7 +8,8 @@ import { getFirestore } from 'firebase/firestore';
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAaveiUs-lAJ5FviUX6NDpFDplOR8aEEOA",
-  authDomain: "projectdemo-test.firebaseapp.com",
+  // Allow overriding the auth domain so Google shows your branded subdomain
+  authDomain: (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN || "projectdemo-test.firebaseapp.com",
   projectId: "projectdemo-test",
   storageBucket: "projectdemo-test.firebasestorage.app",
   messagingSenderId: "78974368021",
