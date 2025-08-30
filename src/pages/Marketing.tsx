@@ -75,9 +75,21 @@ const Marketing: React.FC = () => {
 
         {/* Screenshots */}
         <section className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <ScreenshotCard title="Accounts" desc="See balances by currency and account type." src="/screens/accounts.svg" />
-          <ScreenshotCard title="Bills & Reminders" desc="Pay with conversion and keep schedules on track." src="/screens/bills.svg" />
-          <ScreenshotCard title="Fixed Savings" desc="Contribute multiple weeks at once with clear progress." src="/screens/fixed-savings.svg" />
+          <ScreenshotCard
+            title="Accounts"
+            desc="See balances by currency and account type."
+            src="https://mybudgetsandgoals.com/AccountsExample.png"
+          />
+          <ScreenshotCard
+            title="Bills & Reminders"
+            desc="Pay with conversion and keep schedules on track."
+            src="https://mybudgetsandgoals.com/BillsInMultipleCurrencies.png"
+          />
+          <ScreenshotCard
+            title="Fixed Savings"
+            desc="Contribute multiple weeks at once with clear progress."
+            src="https://mybudgetsandgoals.com/FixedSsavings.png"
+          />
         </section>
 
         {/* Testimonials */}
@@ -103,4 +115,3 @@ const Marketing: React.FC = () => {
 };
 
 export default Marketing;
-
