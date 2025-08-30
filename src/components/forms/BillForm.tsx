@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Bill, CreateBillData, billService } from '@/services/BillService';
 import { Category, categoryService } from '@/services/CategoryService';
+import AddCategoryDialog from '@/components/modals/AddCategoryDialog';
 import { fxService } from '@/services/FxService';
 import { useAppContext } from '@/contexts/AppContext';
 
@@ -36,6 +37,7 @@ const BillForm: React.FC<BillFormProps> = ({ bill, onSave, onCancel }) => {
   });
   
   const [categories, setCategories] = useState<Category[]>([]);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const [date, setDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
@@ -102,6 +104,14 @@ const BillForm: React.FC<BillFormProps> = ({ bill, onSave, onCancel }) => {
       setError('Failed to load required data. Please try again.');
     } finally {
       setDataLoading(false);
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    if (value === '__add__') {
+      setShowAddCategory(true);
+    } else {
+      setFormData({ ...formData, category: value });
     }
   };
 
@@ -250,12 +260,12 @@ const BillForm: React.FC<BillFormProps> = ({ bill, onSave, onCancel }) => {
 
           <div>
             <Label htmlFor="category">Category</Label>
-            <Select value={formData.category} onValueChange={(value) => 
-              setFormData({ ...formData, category: value })}>
+            <Select value={formData.category} onValueChange={handleCategoryChange}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__add__" className="text-blue-600">+ Add new category</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.name}>
                     {category.name}
@@ -362,6 +372,18 @@ const BillForm: React.FC<BillFormProps> = ({ bill, onSave, onCancel }) => {
           </div>
         </form>
       </CardContent>
+      <AddCategoryDialog
+        open={showAddCategory}
+        onOpenChange={setShowAddCategory}
+        defaultType={'expense'}
+        onCreated={(c) => {
+          setCategories((prev) => {
+            if (prev.some(p => p.name.toLowerCase() === c.name.toLowerCase())) return prev;
+            return [...prev, c];
+          });
+          setFormData({ ...formData, category: c.name });
+        }}
+      />
     </Card>
   );
 };
