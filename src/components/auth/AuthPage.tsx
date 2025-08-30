@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LoginForm } from './LoginForm';
 import { SignUpForm } from './SignUpForm';
-import LogoMark from '@/components/LogoMark';
+// Use provided brand logo
 
 export const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,7 +15,7 @@ export const AuthPage: React.FC = () => {
       <div className="relative z-10 max-w-md w-full space-y-8">
         <div className="text-center space-y-3">
           <div className="mx-auto h-14 w-14 rounded-2xl bg-white/90 dark:bg-white/10 flex items-center justify-center shadow-md ring-1 ring-black/5">
-            <LogoMark size={28} />
+            <img src="https://mybudgetsandgoals.com/BudgetAndGoalsLogo.png" alt="My Budgets & Goals" className="h-8 w-auto" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-blue-700 to-fuchsia-700 dark:from-blue-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
             Personal Finance Manager
