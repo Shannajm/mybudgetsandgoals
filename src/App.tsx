@@ -12,6 +12,8 @@ import { AuthService } from "@/services/AuthService";
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Marketing from "@/pages/Marketing";
+import Privacy from "@/pages/Privacy";
+import Terms from "@/pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -41,11 +43,15 @@ const AppContent = () => {
         <>
           <Route path="/*" element={<AppLayout />} />
           <Route path="/auth" element={<Navigate to="/" replace />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
         </>
       ) : (
         <>
           <Route path="/" element={<Marketing />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </>
       )}
